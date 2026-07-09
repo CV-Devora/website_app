@@ -35,7 +35,7 @@ export function StorefrontHeader() {
             );
           })}
           <Link
-            href="/dashboard"
+            href="/login"
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Masuk

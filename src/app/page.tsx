@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { StorefrontHeader } from "@/features/storefront/components/storefront-header";
 import { StorefrontFooter } from "@/features/storefront/components/storefront-footer";
 import { ProductCard, type BarangCardData } from "@/features/storefront/components/product-card";
+import { HallmarkStamp } from "@/components/shared/hallmark-stamp";
 import { Loader2 } from "lucide-react";
 
 const categories = [
@@ -13,58 +14,6 @@ const categories = [
   { label: "22K", karat: 22 },
   { label: "18K", karat: 18 },
 ];
-
-function round(n: number) {
-  return Math.round(n * 100) / 100;
-}
-
-function HallmarkStamp() {
-  const ticks = Array.from({ length: 24 }).map((_, i) => {
-    const angle = (i / 24) * 2 * Math.PI;
-    const x1 = round(100 + 88 * Math.cos(angle));
-    const y1 = round(100 + 88 * Math.sin(angle));
-    const x2 = round(100 + 96 * Math.cos(angle));
-    const y2 = round(100 + 96 * Math.sin(angle));
-    return (
-      <line
-        key={i}
-        x1={x1}
-        y1={y1}
-        x2={x2}
-        y2={y2}
-        stroke="var(--gold)"
-        strokeWidth="1.5"
-      />
-    );
-  });
-
-  return (
-    <svg viewBox="0 0 200 200" className="h-full w-full">
-      <circle cx="100" cy="100" r="80" fill="none" stroke="var(--gold)" strokeWidth="1.5" strokeDasharray="3 5" />
-      {ticks}
-      <text
-        x="100"
-        y="98"
-        textAnchor="middle"
-        fontSize="34"
-        fontWeight="700"
-        fill="var(--foreground)"
-      >
-        24K
-      </text>
-      <text
-        x="100"
-        y="122"
-        textAnchor="middle"
-        fontSize="11"
-        letterSpacing="3"
-        fill="var(--emerald)"
-      >
-        MURNI
-      </text>
-    </svg>
-  );
-}
 
 export default function LandingPage() {
   const [featured, setFeatured] = useState<BarangCardData[]>([]);
