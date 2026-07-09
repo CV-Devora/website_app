@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   ShoppingBag,
   Gem,
+  Archive,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const navItems: {
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
   { label: "Products", href: "/dashboard/products", icon: Gem },
+  { label: "Baki", href: "/dashboard/baki", icon: Archive },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
