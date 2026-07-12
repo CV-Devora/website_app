@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api/v1";
 
 function getAuthHeaders(): HeadersInit {
   if (typeof window === "undefined") return {};
@@ -71,6 +71,15 @@ export const api = {
       apiFetch<{ code: number; data: unknown }>(`/karat/${id}`, { method: "PUT", body: JSON.stringify(body) }),
     delete: (id: string) =>
       apiFetch<{ code: number }>(`/karat/${id}`, { method: "DELETE" }),
+  },
+  baki: {
+    list: () => apiFetch<{ code: number; data: unknown[] }>("/baki"),
+    create: (body: unknown) =>
+      apiFetch<{ code: number; data: unknown }>("/baki", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: string, body: unknown) =>
+      apiFetch<{ code: number; data: unknown }>(`/baki/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+    delete: (id: string) =>
+      apiFetch<{ code: number }>(`/baki/${id}`, { method: "DELETE" }),
   },
   users: {
     list: () => apiFetch<{ code: number; data: unknown[] }>("/users"),

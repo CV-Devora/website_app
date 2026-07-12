@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ interface Pembelian {
 }
 
 export default function PembelianPage() {
+  const router = useRouter();
   const [pembelians, setPembelians] = useState<Pembelian[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -145,7 +147,7 @@ export default function PembelianPage() {
             Kelola transaksi pembelian dari supplier atau pelanggan.
           </p>
         </div>
-        <Button onClick={() => handleOpenSheet()}>
+        <Button onClick={() => router.push("/pembelian/tambah")}>
           <Plus className="mr-2 size-4" />
           Tambah Pembelian
         </Button>
