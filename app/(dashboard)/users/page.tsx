@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Sheet,
   SheetContent,
@@ -39,6 +40,8 @@ export default function UsersPage() {
 
   const [formData, setFormData] = useState({ nama: "", username: "", password: "", role: "sales" });
   const [submitting, setSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(10);
 
   useEffect(() => {
     fetchUsers();
@@ -55,6 +58,10 @@ export default function UsersPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setPage(1);
+  }, [users]);
 
   const handleOpenSheet = (user?: User) => {
     if (user) {
@@ -116,6 +123,12 @@ export default function UsersPage() {
     }
   };
 
+  const totalPages = Math.ceil(users.length / perPage);
+  const paginatedData = useMemo(
+    () => users.slice((page - 1) * perPage, page * perPage),
+    [users, page, perPage]
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -143,6 +156,7 @@ export default function UsersPage() {
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
+            <>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -161,7 +175,7 @@ export default function UsersPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    users.map((user) => (
+                    paginatedData.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.nama}</TableCell>
                         <TableCell>{user.username}</TableCell>
@@ -190,6 +204,8 @@ export default function UsersPage() {
                 </TableBody>
               </Table>
             </div>
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            </>
           )}
         </CardContent>
       </Card>

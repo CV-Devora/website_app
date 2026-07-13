@@ -43,9 +43,9 @@ export function AppSidebar() {
             collapsed ? "justify-center" : "justify-between"
           )}
         >
-          <div className="flex items-center gap-2 overflow-hidden">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary">
-              <Gem className="size-4 text-sidebar-primary-foreground" />
+          <div className="flex items-center gap-4 ml-2 overflow-hidden">
+            <div className="flex shrink-0 items-center justify-center">
+              <img src="jason.png" alt="Jason Jewelry" className={collapsed ? "w-8 h-8" : "w-14 h-11"} />
             </div>
             {!collapsed && (
               <div className="overflow-hidden">

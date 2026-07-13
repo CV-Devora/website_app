@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Sheet,
   SheetContent,
@@ -25,12 +26,26 @@ import {
 } from "@/components/ui/sheet";
 import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
 
+interface BarangItem {
+  id: string;
+  barcode: string;
+  nama: string;
+  karat: number;
+  berat: number;
+  harga: number;
+  photo: string;
+  kondisi: string;
+  baki_id: string | null;
+}
+
 interface Pembelian {
   id: string;
   no_faktur: string;
   nama: string;
   tipe_pemasok: string;
   harga_deal: number;
+  barang?: BarangItem[];
+  created_at?: string;
 }
 
 export default function PembelianPage() {
@@ -47,6 +62,11 @@ export default function PembelianPage() {
     harga_deal: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [detailPembelian, setDetailPembelian] = useState<Pembelian | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(10);
 
   useEffect(() => {
     fetchPembelians();
@@ -63,6 +83,10 @@ export default function PembelianPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setPage(1);
+  }, [pembelians]);
 
   const handleOpenSheet = (pembelian?: Pembelian) => {
     if (pembelian) {
@@ -128,6 +152,21 @@ export default function PembelianPage() {
     }
   };
 
+  const handleOpenDetail = async (id: string) => {
+    setDetailLoading(true);
+    setDetailOpen(true);
+    try {
+      const res = await api.pembelian.get(id);
+      setDetailPembelian(res.data as Pembelian);
+    } catch (error) {
+      console.error("Failed to fetch detail:", error);
+      alert("Gagal memuat detail pembelian.");
+      setDetailOpen(false);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
   const formatRupiah = (number: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -135,6 +174,12 @@ export default function PembelianPage() {
       minimumFractionDigits: 0,
     }).format(number);
   };
+
+  const totalPages = Math.ceil(pembelians.length / perPage);
+  const paginatedData = useMemo(
+    () => pembelians.slice((page - 1) * perPage, page * perPage),
+    [pembelians, page, perPage]
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -163,15 +208,16 @@ export default function PembelianPage() {
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
+            <>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>No. Faktur</TableHead>
-                    <TableHead>Nama (Toko/Supplier)</TableHead>
-                    <TableHead>Tipe</TableHead>
-                    <TableHead>Harga Deal</TableHead>
-                    <TableHead className="w-[100px] text-right">Aksi</TableHead>
+                    <TableHead>Nama Pemasok</TableHead>
+                    <TableHead>Tipe Pemasok</TableHead>
+                    <TableHead>Total Harga</TableHead>
+                    <TableHead className="w-[100px] text-center">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -182,13 +228,21 @@ export default function PembelianPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    pembelians.map((item) => (
+                    paginatedData.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.no_faktur}</TableCell>
                         <TableCell>{item.nama}</TableCell>
                         <TableCell className="capitalize">{item.tipe_pemasok}</TableCell>
                         <TableCell>{formatRupiah(item.harga_deal)}</TableCell>
-                        <TableCell className="text-right space-x-2">
+                        <TableCell className="text-right space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenDetail(item.id)}
+                            title="Detail"
+                          >
+                            <svg className="size-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -212,6 +266,8 @@ export default function PembelianPage() {
                 </TableBody>
               </Table>
             </div>
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            </>
           )}
         </CardContent>
       </Card>
@@ -292,6 +348,89 @@ export default function PembelianPage() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      {detailOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDetailOpen(false)}>
+          <div className="bg-background rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div>
+                <h2 className="text-lg font-semibold">Detail Pembelian</h2>
+                <p className="text-sm text-muted-foreground">Informasi lengkap transaksi pembelian.</p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setDetailOpen(false)}>
+                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </Button>
+            </div>
+
+            <div className="p-6 overflow-y-hidden flex-1">
+              {detailLoading ? (
+                <div className="flex justify-center p-8">
+                  <Loader2 className="size-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : detailPembelian ? (
+                <div className="flex flex-col gap-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-muted-foreground text-xs">No. Faktur</Label>
+                      <p className="font-medium">{detailPembelian.no_faktur}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground text-xs">Tipe Pemasok</Label>
+                      <p className="font-medium capitalize">{detailPembelian.tipe_pemasok}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground text-xs">Nama Pemasok</Label>
+                      <p className="font-medium">{detailPembelian.nama}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground text-xs">Total Harga</Label>
+                      <p className="font-medium">{formatRupiah(detailPembelian.harga_deal)}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-semibold mb-2">Daftar Barang</h4>
+                    <div className="rounded-md border mb-6">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Barcode</TableHead>
+                            <TableHead>Nama</TableHead>
+                            <TableHead>Karat</TableHead>
+                            <TableHead>Berat (gr)</TableHead>
+                            <TableHead>Harga</TableHead>
+                            <TableHead>Kondisi</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody className="overflow-y-auto">
+                          {detailPembelian.barang && detailPembelian.barang.length > 0 ? (
+                            detailPembelian.barang.map((b) => (
+                              <TableRow key={b.id}>
+                                <TableCell className="text-xs">{b.barcode}</TableCell>
+                                <TableCell>{b.nama}</TableCell>
+                                <TableCell>{b.karat}</TableCell>
+                                <TableCell>{b.berat.toFixed(3)}</TableCell>
+                                <TableCell>{formatRupiah(b.harga)}</TableCell>
+                                <TableCell className="capitalize">{b.kondisi}</TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={6} className="h-16 text-center text-muted-foreground">
+                                Tidak ada barang.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

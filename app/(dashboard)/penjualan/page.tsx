@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Sheet,
   SheetContent,
@@ -22,7 +24,7 @@ import {
   SheetTitle,
   SheetFooter,
 } from "@/components/ui/sheet";
-import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, Eye } from "lucide-react";
 
 interface Penjualan {
   id: string;
@@ -39,6 +41,7 @@ interface User {
 }
 
 export default function PenjualanPage() {
+  const router = useRouter();
   const [penjualans, setPenjualans] = useState<Penjualan[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +55,8 @@ export default function PenjualanPage() {
     kode_sales: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(10);
 
   useEffect(() => {
     fetchData();
@@ -72,6 +77,10 @@ export default function PenjualanPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setPage(1);
+  }, [penjualans]);
 
   const handleOpenSheet = (penjualan?: Penjualan) => {
     if (penjualan) {
@@ -149,6 +158,12 @@ export default function PenjualanPage() {
     }).format(number);
   };
 
+  const totalPages = Math.ceil(penjualans.length / perPage);
+  const paginatedData = useMemo(
+    () => penjualans.slice((page - 1) * perPage, page * perPage),
+    [penjualans, page, perPage]
+  );
+
   const getSalesName = (kodeSales: string) => {
     const user = users.find((u) => u.id === kodeSales);
     return user ? user.nama : kodeSales;
@@ -167,7 +182,7 @@ export default function PenjualanPage() {
             Kelola transaksi penjualan ke pelanggan.
           </p>
         </div>
-        <Button onClick={() => handleOpenSheet()}>
+        <Button onClick={() => router.push("/penjualan/tambah")}>
           <Plus className="mr-2 size-4" />
           Tambah Penjualan
         </Button>
@@ -183,6 +198,7 @@ export default function PenjualanPage() {
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
+            <>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -202,7 +218,7 @@ export default function PenjualanPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    penjualans.map((item) => (
+                    paginatedData.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.no_faktur}</TableCell>
                         <TableCell>{item.nama}</TableCell>
@@ -232,6 +248,8 @@ export default function PenjualanPage() {
                 </TableBody>
               </Table>
             </div>
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            </>
           )}
         </CardContent>
       </Card>

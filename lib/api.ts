@@ -1,4 +1,5 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api/v1";
+const UPLOAD_BASE = API_BASE.replace("/api/v1", "");
 
 function getAuthHeaders(): HeadersInit {
   if (typeof window === "undefined") return {};
@@ -11,6 +12,12 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { ...getAuthHeaders(), ...(init?.headers ?? {}) },
   });
+  if (res.status === 401 && typeof window !== "undefined") {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+    throw new Error("unauthorized");
+  }
   const json = await res.json();
   if (!res.ok) throw new Error(json.message ?? "API error");
   return json;
@@ -38,6 +45,8 @@ export const api = {
   barang: {
     list: () => apiFetch<{ code: number; data: unknown[] }>("/barang"),
     get: (id: string) => apiFetch<{ code: number; data: unknown }>(`/barang/${id}`),
+    latestBarcode: () =>
+      apiFetch<{ code: number; data: number }>("/barang/latest-barcode"),
     create: (body: unknown) =>
       apiFetch<{ code: number; data: unknown }>("/barang", { method: "POST", body: JSON.stringify(body) }),
     update: (id: string, body: unknown) =>
@@ -47,6 +56,7 @@ export const api = {
   },
   pembelian: {
     list: () => apiFetch<{ code: number; data: unknown[] }>("/pembelian"),
+    get: (id: string) => apiFetch<{ code: number; data: unknown }>(`/pembelian/${id}`),
     create: (body: unknown) =>
       apiFetch<{ code: number; data: unknown }>("/pembelian", { method: "POST", body: JSON.stringify(body) }),
     update: (id: string, body: unknown) =>
@@ -71,6 +81,19 @@ export const api = {
       apiFetch<{ code: number; data: unknown }>(`/karat/${id}`, { method: "PUT", body: JSON.stringify(body) }),
     delete: (id: string) =>
       apiFetch<{ code: number }>(`/karat/${id}`, { method: "DELETE" }),
+  },
+  upload: async (file: File): Promise<string> => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "";
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message ?? "Upload failed");
+    return `${UPLOAD_BASE}${json.data}`;
   },
   baki: {
     list: () => apiFetch<{ code: number; data: unknown[] }>("/baki"),

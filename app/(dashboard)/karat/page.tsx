@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Sheet,
   SheetContent,
@@ -39,6 +40,8 @@ export default function KaratPage() {
   
   const [formData, setFormData] = useState({ name: "", harga: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(10);
 
   useEffect(() => {
     fetchKarats();
@@ -62,6 +65,10 @@ export default function KaratPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setPage(1);
+  }, [karats]);
 
   const handleOpenSheet = (karat?: Karat) => {
     if (karat) {
@@ -123,6 +130,12 @@ export default function KaratPage() {
     }).format(number);
   };
 
+  const totalPages = Math.ceil(karats.length / perPage);
+  const paginatedData = useMemo(
+    () => karats.slice((page - 1) * perPage, page * perPage),
+    [karats, page, perPage]
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -152,6 +165,7 @@ export default function KaratPage() {
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
+            <>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -171,7 +185,7 @@ export default function KaratPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    karats.map((karat) => (
+                    paginatedData.map((karat) => (
                       <TableRow key={karat.id}>
                         <TableCell className="font-medium">{karat.name}</TableCell>
                         <TableCell>{formatRupiah(karat.harga)}</TableCell>
@@ -201,6 +215,8 @@ export default function KaratPage() {
                 </TableBody>
               </Table>
             </div>
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            </>
           )}
         </CardContent>
       </Card>
