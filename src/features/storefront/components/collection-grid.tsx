@@ -1,34 +1,42 @@
-import Link from "next/link";
-import { ProductCard, type BarangCardData } from "./product-card";
+"use client";
 
-export function CollectionGrid({ items }: { items: BarangCardData[] }) {
+import { useState } from "react";
+import { PhotoOnlyCard, type PhotoCardData } from "./photo-only-card";
+
+const categories = ["Cincin", "Anting", "Kalung", "Gelang", "Logam Mulia", "Lainnya"];
+
+export function CollectionGrid({ items }: { items: PhotoCardData[] }) {
+  const [active, setActive] = useState(categories[0]);
+
   return (
-    <section className="mx-auto max-w-6xl px-6 py-20">
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-emerald mb-3">
-            Koleksi
-          </p>
-          <h2 className="text-3xl font-semibold text-foreground">Pilihan Terbaik Kami</h2>
-        </div>
-        <Link href="/produk" className="text-sm text-emerald hover:underline hidden sm:block">
-          Lihat semua →
-        </Link>
-      </div>
+    <section className="bg-cream py-16">
+      <div className="mx-auto max-w-6xl px-6">
+        <h2 className="text-center text-sm font-semibold uppercase tracking-widest text-cream-foreground">
+          Koleksi Perhiasan Jason Jewelry
+        </h2>
 
-      {items.length === 0 ? (
-        <p className="text-muted-foreground">Belum ada produk untuk ditampilkan.</p>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
-          {items.map((barang) => (
-            <ProductCard key={barang.id} barang={barang} />
+        <div className="flex flex-wrap justify-center gap-6 mt-8">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActive(cat)}
+              className={`text-xs font-medium uppercase tracking-wide pb-1 border-b-2 transition-colors ${
+                active === cat
+                  ? "border-olive text-cream-foreground"
+                  : "border-transparent text-cream-foreground/50 hover:text-cream-foreground"
+              }`}
+            >
+              {cat}
+            </button>
           ))}
         </div>
-      )}
 
-      <Link href="/produk" className="block sm:hidden text-center text-sm text-emerald hover:underline mt-6">
-        Lihat semua →
-      </Link>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1 mt-10">
+          {items.slice(0, 10).map((barang) => (
+            <PhotoOnlyCard key={barang.id} barang={barang} />
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

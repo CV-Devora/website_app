@@ -50,6 +50,14 @@
   /* Storefront brand accents */
   --color-gold: var(--gold);
   --color-emerald: var(--emerald);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
+  --color-olive: var(--olive);
+  --color-olive-foreground: var(--olive-foreground);
+  --color-cream: var(--cream);
+  --color-cream-foreground: var(--cream-foreground);
+  --color-rose-start: var(--rose-start);
+  --color-rose-end: var(--rose-end);
 }
 
 :root {
@@ -89,6 +97,14 @@
   /* Storefront brand accents — light mode */
   --gold: #b08d3e;
   --emerald: #1f3d32;
+  --navy: #14162b;
+  --navy-foreground: #ffffff;
+  --olive: #7c7332;
+  --olive-foreground: #ffffff;
+  --cream: #f6f1e7;
+  --cream-foreground: #2b2712;
+  --rose-start: #f6c9dc;
+  --rose-end: #c98fd1;
 }
 
 .dark {
@@ -127,6 +143,14 @@
   /* Storefront brand accents — dark mode (brighter, for visibility on dark bg) */
   --gold: #c9a227;
   --emerald: #4a8a72;
+  --navy: #0b0c1a;
+  --navy-foreground: #ffffff;
+  --olive: #a69b45;
+  --olive-foreground: #14162b;
+  --cream: #1e1b12;
+  --cream-foreground: #f6f1e7;
+  --rose-start: #6b4258;
+  --rose-end: #513463;
 }
 
 @layer base {
