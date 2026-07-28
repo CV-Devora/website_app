@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { User } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -34,6 +35,13 @@ export function StorefrontHeader() {
               </Link>
             );
           })}
+          <Link
+            href="/login"
+            className="flex size-7 items-center justify-center rounded-full border border-cream-foreground/25 text-cream-foreground/70 hover:text-cream-foreground hover:border-cream-foreground/50 transition-colors"
+            title="Masuk"
+          >
+            <User className="size-3.5" />
+          </Link>
         </nav>
       </div>
     </header>
