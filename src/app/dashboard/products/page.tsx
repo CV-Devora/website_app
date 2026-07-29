@@ -26,18 +26,52 @@ import {
 } from "@/components/ui/sheet";
 import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
 
+interface KaratRelation {
+  id: string;
+  name: string;
+  harga: number;
+}
+
+interface Baki {
+  id: string;
+  nama: string;
+  berat?: number;
+}
+
+interface Pembelian {
+  id: string;
+  no_faktur: string;
+  nama: string;
+}
+
 interface Barang {
   id: string;
   barcode: string;
   nama: string;
-  karat: number;
+  karat: number | string | KaratRelation;
+  karat_id?: string;
   berat: number;
   harga: number;
   photo?: string;
   kondisi: string;
   pembelian_id?: string;
   baki_id?: string;
+  baki?: Baki;
   grup_id?: string;
+}
+
+function getKaratLabel(karat: Barang["karat"]): string {
+  if (typeof karat === "number") return `${karat}K`;
+  if (typeof karat === "string") return karat.toUpperCase().endsWith("K") ? karat : `${karat}K`;
+  if (karat && typeof karat === "object") return karat.name ?? "-";
+  return "-";
+}
+
+function getKaratFormValue(karat: Barang["karat"]): string {
+  if (typeof karat === "number") return karat.toString();
+  if (typeof karat === "string") return karat.match(/\d+/)?.[0] ?? karat;
+  if (karat && typeof karat === "object") return karat.name?.match(/\d+/)?.[0] ?? "";
+  return "";
 }
 
 const initialForm = {
@@ -48,10 +82,14 @@ const initialForm = {
   harga: "",
   photo: "",
   kondisi: "baru",
+  baki_id: "",
+  pembelian_id: "",
 };
 
 export default function ProductsPage() {
   const [barangs, setBarangs] = useState<Barang[]>([]);
+  const [bakis, setBakis] = useState<Baki[]>([]);
+  const [pembelians, setPembelians] = useState<Pembelian[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -61,7 +99,7 @@ export default function ProductsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchBarangs();
+    fetchAll();
     const userStr = localStorage.getItem("user");
     if (userStr) {
       try {
@@ -73,16 +111,39 @@ export default function ProductsPage() {
     }
   }, []);
 
-  const fetchBarangs = async () => {
+  const fetchAll = async () => {
     try {
       setLoading(true);
-      const res = await api.barang.list();
-      setBarangs(res.data as Barang[]);
+      const [barangRes, bakiRes, pembelianRes] = await Promise.all([
+        api.barang.list(),
+        api.baki.list(),
+        api.pembelian.list(),
+      ]);
+      setBarangs(barangRes.data as Barang[]);
+      setBakis(bakiRes.data as Baki[]);
+      setPembelians(pembelianRes.data as Pembelian[]);
     } catch (error) {
-      console.error("Failed to fetch barangs:", error);
+      console.error("Failed to fetch data:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getBakiNama = (barang: Barang) => {
+    if (barang.baki?.nama) return barang.baki.nama;
+    if (!barang.baki_id) return "-";
+    return bakis.find((b) => b.id === barang.baki_id)?.nama ?? "-";
+  };
+
+  const getAvailablePembelian = () => {
+    const usedIds = new Set(
+      barangs
+        .filter((b) => b.pembelian_id && b.id !== editingId)
+        .map((b) => b.pembelian_id)
+    );
+    return pembelians.filter(
+      (p) => !usedIds.has(p.id) || p.id === formData.pembelian_id
+    );
   };
 
   const handleOpenSheet = (barang?: Barang) => {
@@ -91,11 +152,13 @@ export default function ProductsPage() {
       setFormData({
         barcode: barang.barcode,
         nama: barang.nama,
-        karat: barang.karat.toString(),
+        karat: getKaratFormValue(barang.karat),
         berat: barang.berat.toString(),
         harga: barang.harga.toString(),
         photo: barang.photo ?? "",
         kondisi: barang.kondisi,
+        baki_id: barang.baki_id ?? "",
+        pembelian_id: barang.pembelian_id ?? "",
       });
     } else {
       setEditingId(null);
@@ -119,11 +182,16 @@ export default function ProductsPage() {
       const payload = {
         barcode: formData.barcode,
         nama: formData.nama,
+        // NOTE: masih dikirim sebagai angka. Kalau backend sudah benar-benar
+        // pindah ke varchar, field ini mungkin perlu dikirim sebagai string —
+        // perlu dikonfirmasi dulu ke senior sebelum diubah.
         karat: parseInt(formData.karat, 10),
         berat: parseFloat(formData.berat),
         harga: parseInt(formData.harga.replace(/\D/g, ""), 10),
         photo: formData.photo || undefined,
         kondisi: formData.kondisi,
+        baki_id: formData.baki_id || null,
+        pembelian_id: formData.pembelian_id || null,
       };
 
       if (editingId) {
@@ -131,7 +199,7 @@ export default function ProductsPage() {
       } else {
         await api.barang.create(payload);
       }
-      await fetchBarangs();
+      await fetchAll();
       handleCloseSheet();
     } catch (error) {
       console.error("Failed to save barang:", error);
@@ -144,7 +212,7 @@ export default function ProductsPage() {
     if (!window.confirm("Apakah Anda yakin ingin menghapus barang ini?")) return;
     try {
       await api.barang.delete(id);
-      await fetchBarangs();
+      await fetchAll();
     } catch (error) {
       console.error("Failed to delete barang:", error);
     }
@@ -200,9 +268,10 @@ export default function ProductsPage() {
                   <TableRow>
                     <TableHead>Barcode</TableHead>
                     <TableHead>Nama</TableHead>
+                    <TableHead>Baki</TableHead>
                     <TableHead>Karat</TableHead>
                     <TableHead>Berat (gr)</TableHead>
-                    <TableHead>Harga</TableHead>
+                    {isAdmin && <TableHead>Harga</TableHead>}
                     <TableHead>Kondisi</TableHead>
                     {isAdmin && <TableHead className="w-[100px] text-right">Aksi</TableHead>}
                   </TableRow>
@@ -212,9 +281,10 @@ export default function ProductsPage() {
                     <TableRow key={barang.id}>
                       <TableCell className="font-mono text-sm">{barang.barcode}</TableCell>
                       <TableCell className="font-medium">{barang.nama}</TableCell>
-                      <TableCell>{barang.karat}K</TableCell>
+                      <TableCell>{getBakiNama(barang)}</TableCell>
+                      <TableCell>{getKaratLabel(barang.karat)}</TableCell>
                       <TableCell>{barang.berat} gr</TableCell>
-                      <TableCell>{formatRupiah(barang.harga)}</TableCell>
+                      {isAdmin && <TableCell>{formatRupiah(barang.harga)}</TableCell>}
                       <TableCell>
                         <Badge variant={barang.kondisi === "baru" ? "default" : "secondary"}>
                           {barang.kondisi}
@@ -283,6 +353,48 @@ export default function ProductsPage() {
                 placeholder="Contoh: Gelang Emas"
                 required
               />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="baki_id" className="text-sm font-medium">
+                Baki
+              </label>
+              <select
+                id="baki_id"
+                value={formData.baki_id}
+                onChange={(e) => setFormData({ ...formData, baki_id: e.target.value })}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              >
+                <option value="">— Tidak ada —</option>
+                {bakis.map((baki) => (
+                  <option key={baki.id} value={baki.id}>
+                    {baki.nama}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="pembelian_id" className="text-sm font-medium">
+                Faktur Pembelian
+              </label>
+              <select
+                id="pembelian_id"
+                value={formData.pembelian_id}
+                onChange={(e) => setFormData({ ...formData, pembelian_id: e.target.value })}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              >
+                <option value="">— Tidak ada —</option>
+                {getAvailablePembelian().map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.no_faktur} — {p.nama}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Satu faktur pembelian hanya untuk satu barang — faktur yang
+                sudah dipakai barang lain tidak muncul di daftar ini.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
