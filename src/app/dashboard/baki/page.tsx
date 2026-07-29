@@ -28,7 +28,10 @@ import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
 interface Baki {
   id: string;
   nama: string;
+  berat?: number;
 }
+
+const initialForm = { nama: "", berat: "" };
 
 export default function BakiPage() {
   const [bakis, setBakis] = useState<Baki[]>([]);
@@ -37,7 +40,7 @@ export default function BakiPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({ nama: "" });
+  const [formData, setFormData] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -68,10 +71,10 @@ export default function BakiPage() {
   const handleOpenSheet = (baki?: Baki) => {
     if (baki) {
       setEditingId(baki.id);
-      setFormData({ nama: baki.nama });
+      setFormData({ nama: baki.nama, berat: baki.berat?.toString() ?? "" });
     } else {
       setEditingId(null);
-      setFormData({ nama: "" });
+      setFormData(initialForm);
     }
     setSheetOpen(true);
   };
@@ -79,7 +82,7 @@ export default function BakiPage() {
   const handleCloseSheet = () => {
     setSheetOpen(false);
     setEditingId(null);
-    setFormData({ nama: "" });
+    setFormData(initialForm);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,7 +91,8 @@ export default function BakiPage() {
 
     setSubmitting(true);
     try {
-      const payload = { nama: formData.nama };
+      const payload: { nama: string; berat?: number } = { nama: formData.nama };
+      if (formData.berat) payload.berat = parseFloat(formData.berat);
 
       if (editingId) {
         await api.baki.update(editingId, payload);
@@ -156,6 +160,7 @@ export default function BakiPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nama Baki</TableHead>
+                    <TableHead>Berat (gr)</TableHead>
                     {isAdmin && <TableHead className="w-[100px] text-right">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -163,6 +168,7 @@ export default function BakiPage() {
                   {bakis.map((baki) => (
                     <TableRow key={baki.id}>
                       <TableCell className="font-medium">{baki.nama}</TableCell>
+                      <TableCell>{baki.berat != null ? `${baki.berat} gr` : "-"}</TableCell>
                       {isAdmin && (
                         <TableCell className="text-right space-x-2">
                           <Button
@@ -197,7 +203,7 @@ export default function BakiPage() {
           <SheetHeader className="px-6 py-4 border-b">
             <SheetTitle>{editingId ? "Edit Baki" : "Tambah Baki"}</SheetTitle>
             <SheetDescription>
-              {editingId ? "Ubah nama baki di bawah ini." : "Masukkan nama baki baru."}
+              {editingId ? "Ubah data baki di bawah ini." : "Masukkan data baki baru."}
             </SheetDescription>
           </SheetHeader>
 
@@ -212,6 +218,23 @@ export default function BakiPage() {
                 onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
                 placeholder="Contoh: Baki 1"
                 required
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="berat" className="text-sm font-medium">
+                Berat (gr)
+              </label>
+              <Input
+                id="berat"
+                type="text"
+                inputMode="decimal"
+                value={formData.berat}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9.]/g, "");
+                  setFormData({ ...formData, berat: val });
+                }}
+                placeholder="Contoh: 50.5"
               />
             </div>
           </form>
