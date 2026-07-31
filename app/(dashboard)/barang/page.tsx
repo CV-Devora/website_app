@@ -15,15 +15,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Pagination } from "@/components/ui/pagination";
+
+import { toast } from "sonner";
+import { Pencil, Trash2, Plus, Loader2, Search } from "lucide-react";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
-import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Karat {
   id: string;
@@ -59,6 +63,7 @@ export default function BarangPage() {
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedBarang, setSelectedBarang] = useState<Barang | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     barcode: "",
@@ -71,7 +76,8 @@ export default function BarangPage() {
     photo: "",
   });
   const [page, setPage] = useState(1);
-  const [perPage] = useState(10);
+  const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchInitialData();
@@ -190,7 +196,7 @@ export default function BarangPage() {
       setFormData((prev) => ({ ...prev, photo: url }));
     } catch (err) {
       console.error("Upload gagal:", err);
-      alert("Gagal mengupload foto");
+      toast.error("Gagal mengupload foto");
     }
   };
 
@@ -213,26 +219,36 @@ export default function BarangPage() {
 
       if (editingId) {
         await api.barang.update(editingId, payload);
+        toast.success("Data barang berhasil diperbarui.");
       } else {
         await api.barang.create(payload);
+        toast.success("Data barang berhasil ditambahkan.");
       }
       await fetchBarangs();
       handleCloseSheet();
     } catch (error) {
       console.error("Failed to save barang:", error);
-      alert("Gagal menyimpan barang.");
+      toast.error("Gagal menyimpan barang.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus data barang ini?")) return;
+  const confirmDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const executeDelete = async () => {
+    if (!deleteId) return;
     try {
-      await api.barang.delete(id);
+      await api.barang.delete(deleteId);
+      toast.success("Data barang berhasil dihapus.");
       await fetchBarangs();
     } catch (error) {
       console.error("Failed to delete barang:", error);
+      toast.error("Gagal menghapus data barang.");
+    } finally {
+      setDeleteId(null);
     }
   };
 
@@ -244,10 +260,14 @@ export default function BarangPage() {
     }).format(number);
   };
 
-  const totalPages = Math.ceil(barangs.length / perPage);
+  const filteredData = useMemo(
+    () => barangs.filter((b) => b.barcode.toLowerCase().includes(search.toLowerCase()) || b.nama.toLowerCase().includes(search.toLowerCase())),
+    [barangs, search]
+  );
+  const totalPages = Math.ceil(filteredData.length / perPage);
   const paginatedData = useMemo(
-    () => barangs.slice((page - 1) * perPage, page * perPage),
-    [barangs, page, perPage]
+    () => filteredData.slice((page - 1) * perPage, page * perPage),
+    [filteredData, page, perPage]
   );
 
   const getKaratName = (item: any) => {
@@ -262,21 +282,21 @@ export default function BarangPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Data Barang
+            Manajemen Inventaris
           </h1>
           <p className="text-sm text-muted-foreground">
-            Kelola inventaris perhiasan toko emas Anda.
+            Kelola stok dan data seluruh perhiasan di inventaris toko.
           </p>
         </div>
         <Button onClick={() => handleOpenSheet()}>
           <Plus className="mr-2 size-4" />
-          Tambah Barang
+          Tambah Barang Baru
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Barang</CardTitle>
+          <CardTitle>Daftar Stok Barang</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -285,6 +305,15 @@ export default function BarangPage() {
             </div>
           ) : (
             <>
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari barcode atau nama barang..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -293,16 +322,16 @@ export default function BarangPage() {
                     <TableHead>Nama Barang</TableHead>
                     <TableHead>Kadar</TableHead>
                     <TableHead>Berat (gr)</TableHead>
-                    <TableHead>Harga</TableHead>
+                    <TableHead>Harga Jual</TableHead>
                     <TableHead>Kondisi</TableHead>
-                    <TableHead className="w-[100px] text-center">Aksi</TableHead>
+                    <TableHead className="w-[100px] text-center">Tindakan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {barangs.length === 0 ? (
+                  {filteredData.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="h-24 text-center">
-                        Tidak ada data barang.
+                        Belum ada data barang dalam inventaris.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -334,7 +363,7 @@ export default function BarangPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(item.id)}
+                            onClick={() => confirmDelete(item.id)}
                             title="Hapus"
                           >
                             <Trash2 className="size-4 text-red-600" />
@@ -346,162 +375,164 @@ export default function BarangPage() {
                 </TableBody>
               </Table>
             </div>
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} perPage={perPage} onPerPageChange={setPerPage} />
             </>
           )}
         </CardContent>
       </Card>
 
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="right" className="sm:max-w-md p-0 flex flex-col gap-0 w-full sm:w-[500px]">
-          <SheetHeader className="px-6 py-4 border-b">
-            <SheetTitle>{editingId ? "Edit Barang" : "Tambah Barang"}</SheetTitle>
-            <SheetDescription>
-              {editingId
-                ? "Ubah data barang di bawah ini."
-                : "Masukkan detail barang baru ke inventaris."}
-            </SheetDescription>
-          </SheetHeader>
-          
-          <form id="barang-form" onSubmit={handleSubmit} className="flex flex-col gap-5 p-6 flex-1 overflow-y-auto">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="barcode">Barcode</Label>
-              <Input
-                id="barcode"
-                value={formData.barcode}
-                onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                required
-              />
-              {!editingId && (
-                <p className="text-[10px] text-muted-foreground">Barcode digenerate otomatis berdasarkan data terakhir.</p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="nama">Nama Barang</Label>
-              <Input
-                id="nama"
-                value={formData.nama}
-                onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
-                placeholder="Contoh: Cincin Emas Polos"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="karat_id">Kadar / Karat</Label>
-                <select
-                  id="karat_id"
-                  value={formData.karat_id}
-                  onChange={(e) => setFormData({ ...formData, karat_id: e.target.value })}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                  required
-                >
-                  <option value="">Pilih</option>
-                  {karatList.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.name}
-                    </option>
-                  ))}
-                </select>
+      {sheetOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleCloseSheet}>
+          <div className="bg-background rounded-lg shadow-lg max-w-lg w-full mx-4 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div>
+                <h2 className="text-lg font-semibold">{editingId ? "Edit Barang" : "Tambah Barang"}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {editingId
+                    ? "Ubah data barang di bawah ini."
+                    : "Masukkan detail barang baru ke inventaris."}
+                </p>
               </div>
+              <Button variant="ghost" size="icon" onClick={handleCloseSheet}>
+                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </Button>
+            </div>
 
+            <form id="barang-form" onSubmit={handleSubmit} className="flex flex-col gap-5 p-6 overflow-y-auto">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="berat">Berat (gr)</Label>
+                <Label htmlFor="barcode">Barcode</Label>
                 <Input
-                  id="berat"
-                  type="text"
-                  value={formData.berat}
-                  onChange={(e) => setFormData({ ...formData, berat: e.target.value })}
-                  placeholder="0.000"
+                  id="barcode"
+                  value={formData.barcode}
+                  onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                  disabled
                   required
                 />
               </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="harga">Harga (Rp)</Label>
-              <Input
-                id="harga"
-                type="text"
-                value={formData.harga ? formatRupiah(parseInt(formData.harga.toString().replace(/\D/g, "") || "0")).replace("Rp", "").trim() : ""}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, "");
-                  setFormData({ ...formData, harga: val });
-                }}
-                placeholder="0"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="kondisi">Kondisi</Label>
-                <select
-                  id="kondisi"
-                  value={formData.kondisi}
-                  onChange={(e) => setFormData({ ...formData, kondisi: e.target.value })}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                >
-                  <option value="baru">Baru</option>
-                  <option value="bekas">Bekas</option>
-                  <option value="rusak">Rusak</option>
-                </select>
-              </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="baki_id">Baki</Label>
-                <select
-                  id="baki_id"
-                  value={formData.baki_id}
-                  onChange={(e) => setFormData({ ...formData, baki_id: e.target.value })}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                >
-                  <option value="">Pilih Baki</option>
-                  {bakiList.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.nama}
-                    </option>
-                  ))}
-                </select>
+                <Label htmlFor="nama">Nama Barang</Label>
+                <Input
+                  id="nama"
+                  value={formData.nama}
+                  onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
+                  placeholder="Contoh: Cincin Emas Polos"
+                  required
+                />
               </div>
-            </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="photo">Foto Barang</Label>
-              <Input
-                id="photo"
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-              {formData.photo && (
-                <div className="mt-2 relative h-32 w-32 overflow-hidden rounded-md border">
-                  <img
-                    src={formData.photo}
-                    alt="Preview"
-                    className="object-cover h-full w-full"
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="karat_id">Kadar / Karat</Label>
+                  <select
+                    id="karat_id"
+                    value={formData.karat_id}
+                    onChange={(e) => setFormData({ ...formData, karat_id: e.target.value })}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    required
+                  >
+                    <option value="">Pilih</option>
+                    {karatList.map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="berat">Berat (gr)</Label>
+                  <Input
+                    id="berat"
+                    type="text"
+                    value={formData.berat}
+                    onChange={(e) => setFormData({ ...formData, berat: e.target.value })}
+                    placeholder="0.000"
+                    required
                   />
                 </div>
-              )}
-            </div>
+              </div>
 
-          </form>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="harga">Harga (Rp)</Label>
+                <Input
+                  id="harga"
+                  type="text"
+                  value={formData.harga ? formatRupiah(parseInt(formData.harga.toString().replace(/\D/g, "") || "0")).replace("Rp", "").trim() : ""}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    setFormData({ ...formData, harga: val });
+                  }}
+                  placeholder="0"
+                  required
+                />
+              </div>
 
-          <SheetFooter className="px-6 py-4 border-t mt-auto">
-            <div className="flex w-full gap-2">
-              <Button type="button" variant="outline" className="flex-1" onClick={handleCloseSheet}>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="kondisi">Kondisi</Label>
+                  <select
+                    id="kondisi"
+                    value={formData.kondisi}
+                    onChange={(e) => setFormData({ ...formData, kondisi: e.target.value })}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  >
+                    <option value="baru">Baru</option>
+                    <option value="bekas">Bekas</option>
+                    <option value="rusak">Rusak</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="baki_id">Baki</Label>
+                  <select
+                    id="baki_id"
+                    value={formData.baki_id}
+                    onChange={(e) => setFormData({ ...formData, baki_id: e.target.value })}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  >
+                    <option value="">Pilih Baki</option>
+                    {bakiList.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.nama}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="photo">Foto Barang</Label>
+                <Input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                {formData.photo && (
+                  <div className="mt-2 relative h-32 w-32 overflow-hidden rounded-md border">
+                    <img
+                      src={formData.photo}
+                      alt="Preview"
+                      className="object-cover h-full w-full"
+                    />
+                  </div>
+                )}
+              </div>
+            </form>
+
+            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t">
+              <Button type="button" variant="outline" onClick={handleCloseSheet}>
                 Batal
               </Button>
-              <Button type="submit" form="barang-form" className="flex-1" disabled={submitting}>
+              <Button type="submit" form="barang-form" disabled={submitting}>
                 {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Simpan
               </Button>
             </div>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </div>
+        </div>
+      )}
 
       {detailOpen && selectedBarang && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleCloseDetail}>
@@ -564,6 +595,23 @@ export default function BarangPage() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Barang</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus data barang ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={executeDelete} className="bg-red-600 hover:bg-red-700">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

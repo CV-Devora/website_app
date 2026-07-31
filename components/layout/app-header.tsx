@@ -54,7 +54,7 @@ export function AppHeader() {
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
-            placeholder="Cari..."
+            placeholder="Cari data..."
             className="h-9 w-full rounded-lg border border-input bg-card pl-9 pr-4 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
           />
         </div>

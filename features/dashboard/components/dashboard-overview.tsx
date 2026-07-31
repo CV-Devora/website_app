@@ -33,7 +33,7 @@ export function DashboardOverview() {
           Dashboard
         </h1>
         <p className="text-sm text-muted-foreground">
-          Overview performa toko emas Anda hari ini.
+          Ringkasan performa toko emas Anda hari ini.
         </p>
       </div>
 

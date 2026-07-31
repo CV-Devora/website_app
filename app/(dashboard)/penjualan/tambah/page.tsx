@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { toast } from "sonner";
 import { Loader2, ArrowLeft, Search } from "lucide-react";
 
 interface User {
@@ -87,7 +88,7 @@ export default function TambahPenjualanPage() {
   const handleSubmit = async () => {
     if (!formData.no_faktur || !formData.nama || !formData.kode_sales) return;
     if (selectedIds.size === 0) {
-      alert("Pilih minimal satu barang.");
+      toast.warning("Pilih minimal satu barang.");
       return;
     }
 
@@ -105,7 +106,7 @@ export default function TambahPenjualanPage() {
       router.push("/penjualan");
     } catch (error) {
       console.error("Gagal menyimpan penjualan:", error);
-      alert("Gagal menyimpan penjualan.");
+      toast.error("Gagal menyimpan penjualan.");
     } finally {
       setSubmitting(false);
     }

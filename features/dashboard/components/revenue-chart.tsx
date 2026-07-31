@@ -49,8 +49,8 @@ export function RevenueChart({ data, loading }: RevenueChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Revenue Penjualan</CardTitle>
-        <CardDescription>Grafik total penjualan harian</CardDescription>
+        <CardTitle>Grafik Omzet Penjualan</CardTitle>
+        <CardDescription>Perkembangan total nilai penjualan harian</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={260}>
@@ -77,7 +77,7 @@ export function RevenueChart({ data, loading }: RevenueChartProps) {
               width={72}
             />
             <Tooltip
-              formatter={(v: number) => [formatRupiah(v), "Revenue"]}
+              formatter={(v: number) => [formatRupiah(v), "Omzet"]}
               contentStyle={{
                 background: "white",
                 border: "1px solid oklch(0.9 0.02 240)",

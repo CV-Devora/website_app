@@ -55,8 +55,8 @@ export default function LoginPage() {
         <div className="relative z-10 max-w-md space-y-8">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-              <Gem className="size-6 text-white" />
+            <div className="flex items-center justify-center rounded-xl">
+              <img src="jason.png" alt="Jason Jewelry" className="w-22 h-16" />
             </div>
             <div>
               <p className="text-xl font-bold">Toko Emas</p>

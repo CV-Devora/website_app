@@ -45,7 +45,7 @@ export function AppSidebar() {
         >
           <div className="flex items-center gap-4 ml-2 overflow-hidden">
             <div className="flex shrink-0 items-center justify-center">
-              <img src="jason.png" alt="Jason Jewelry" className={collapsed ? "w-8 h-8" : "w-14 h-11"} />
+              <img src="jason.png" alt="Jason Jewelry" className={collapsed ? "w-8 h-8" : "w-12 h-10"} />
             </div>
             {!collapsed && (
               <div className="overflow-hidden">

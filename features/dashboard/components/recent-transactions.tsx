@@ -58,20 +58,20 @@ export function RecentTransactions({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Transaksi Terkini</CardTitle>
+        <CardTitle>Aktivitas Transaksi Terbaru</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         {merged.length === 0 ? (
           <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-            Belum ada data transaksi.
+            Belum ada data transaksi yang tersedia.
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Tanggal</TableHead>
-                <TableHead>Tipe</TableHead>
-                <TableHead className="text-right">Jumlah</TableHead>
+                <TableHead>Jenis Transaksi</TableHead>
+                <TableHead className="text-right">Nilai</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

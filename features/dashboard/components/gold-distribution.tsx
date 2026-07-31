@@ -37,8 +37,8 @@ export function GoldDistribution({ data, loading }: GoldDistributionProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Distribusi Karat Barang</CardTitle>
-        <CardDescription>Jumlah barang berdasarkan kadar emas</CardDescription>
+        <CardTitle>Distribusi Kadar Emas</CardTitle>
+        <CardDescription>Komposisi stok barang berdasarkan kadar karat</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={260}>
@@ -60,7 +60,7 @@ export function GoldDistribution({ data, loading }: GoldDistributionProps) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(v: number) => [v, "Barang"]}
+              formatter={(v: number) => [v, "unit"]}
               contentStyle={{
                 background: "white",
                 border: "1px solid oklch(0.9 0.02 240)",

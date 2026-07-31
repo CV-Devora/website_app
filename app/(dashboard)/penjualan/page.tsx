@@ -24,7 +24,18 @@ import {
   SheetTitle,
   SheetFooter,
 } from "@/components/ui/sheet";
-import { Pencil, Trash2, Plus, Loader2, Eye } from "lucide-react";
+import { toast } from "sonner";
+import { Pencil, Trash2, Plus, Loader2, Search } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Penjualan {
   id: string;
@@ -47,7 +58,7 @@ export default function PenjualanPage() {
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     no_faktur: "",
     nama: "",
@@ -56,9 +67,19 @@ export default function PenjualanPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [page, setPage] = useState(1);
-  const [perPage] = useState(10);
+  const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
 
   useEffect(() => {
+    const raw = localStorage.getItem("user");
+    if (raw) {
+      try {
+        const user = JSON.parse(raw) as User;
+        setCurrentRole(user.role?.toLowerCase());
+      } catch {}
+    }
     fetchData();
   }, []);
 
@@ -111,7 +132,7 @@ export default function PenjualanPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.no_faktur || !formData.nama || !formData.total_harga || !formData.kode_sales) return;
-    
+
     setSubmitting(true);
     try {
       const payload = {
@@ -123,30 +144,40 @@ export default function PenjualanPage() {
 
       if (editingId) {
         await api.penjualan.update(editingId, payload);
+        toast.success("Data penjualan berhasil diperbarui.");
       } else {
         await api.penjualan.create(payload);
+        toast.success("Data penjualan berhasil ditambahkan.");
       }
-      
+
       const res = await api.penjualan.list();
       setPenjualans(res.data as Penjualan[]);
-      
+
       handleCloseSheet();
     } catch (error) {
       console.error("Failed to save penjualan:", error);
-      alert("Gagal menyimpan penjualan.");
+      toast.error("Gagal menyimpan penjualan.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus data penjualan ini?")) return;
+  const confirmDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const executeDelete = async () => {
+    if (!deleteId) return;
     try {
-      await api.penjualan.delete(id);
+      await api.penjualan.delete(deleteId);
+      toast.success("Data penjualan berhasil dihapus.");
       const res = await api.penjualan.list();
       setPenjualans(res.data as Penjualan[]);
     } catch (error) {
       console.error("Failed to delete penjualan:", error);
+      toast.error("Gagal menghapus penjualan.");
+    } finally {
+      setDeleteId(null);
     }
   };
 
@@ -158,10 +189,14 @@ export default function PenjualanPage() {
     }).format(number);
   };
 
-  const totalPages = Math.ceil(penjualans.length / perPage);
+  const filteredData = useMemo(
+    () => penjualans.filter((p) => p.no_faktur.toLowerCase().includes(search.toLowerCase()) || p.nama.toLowerCase().includes(search.toLowerCase())),
+    [penjualans, search]
+  );
+  const totalPages = Math.ceil(filteredData.length / perPage);
   const paginatedData = useMemo(
-    () => penjualans.slice((page - 1) * perPage, page * perPage),
-    [penjualans, page, perPage]
+    () => filteredData.slice((page - 1) * perPage, page * perPage),
+    [filteredData, page, perPage]
   );
 
   const getSalesName = (kodeSales: string) => {
@@ -171,26 +206,33 @@ export default function PenjualanPage() {
 
   const salesUsers = users.filter((u) => u.role === "sales");
 
+  const isSales = currentRole === "sales";
+  const isAdmin = currentRole === "admin";
+  const canDelete = isSales || isAdmin;
+  const showAksi = isSales || isAdmin;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Data Penjualan
+            Transaksi Penjualan
           </h1>
           <p className="text-sm text-muted-foreground">
-            Kelola transaksi penjualan ke pelanggan.
+            Pantau dan kelola seluruh transaksi penjualan kepada pelanggan.
           </p>
         </div>
-        <Button onClick={() => router.push("/penjualan/tambah")}>
-          <Plus className="mr-2 size-4" />
-          Tambah Penjualan
-        </Button>
+        {isSales && (
+          <Button onClick={() => router.push("/penjualan/tambah")}>
+            <Plus className="mr-2 size-4" />
+            Buat Penjualan Baru
+          </Button>
+        )}
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Penjualan</CardTitle>
+          <CardTitle>Riwayat Transaksi Penjualan</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -199,22 +241,31 @@ export default function PenjualanPage() {
             </div>
           ) : (
             <>
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari no. faktur atau nama pelanggan..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>No. Faktur</TableHead>
                     <TableHead>Nama Pelanggan</TableHead>
-                    <TableHead>Total Harga</TableHead>
-                    <TableHead>Sales</TableHead>
-                    <TableHead className="w-[100px] text-right">Aksi</TableHead>
+                    <TableHead>Total Nilai</TableHead>
+                    <TableHead>Nama Sales</TableHead>
+                    {showAksi && <TableHead className="w-[100px] text-center">Tindakan</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {penjualans.length === 0 ? (
+                  {filteredData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
-                        Tidak ada data penjualan.
+                      <TableCell colSpan={showAksi ? 5 : 4} className="h-24 text-center">
+                        Belum ada data transaksi penjualan.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -224,31 +275,37 @@ export default function PenjualanPage() {
                         <TableCell>{item.nama}</TableCell>
                         <TableCell>{formatRupiah(item.total_harga)}</TableCell>
                         <TableCell>{getSalesName(item.kode_sales)}</TableCell>
-                        <TableCell className="text-right space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenSheet(item)}
-                            title="Edit"
-                          >
-                            <Pencil className="size-4 text-blue-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(item.id)}
-                            title="Hapus"
-                          >
-                            <Trash2 className="size-4 text-red-600" />
-                          </Button>
-                        </TableCell>
+                        {showAksi && (
+                          <TableCell className="text-center space-x-1">
+                            {isSales && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleOpenSheet(item)}
+                                title="Edit"
+                              >
+                                <Pencil className="size-4 text-blue-600" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => confirmDelete(item.id)}
+                                title="Hapus"
+                              >
+                                <Trash2 className="size-4 text-red-600" />
+                              </Button>
+                            )}
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))
                   )}
                 </TableBody>
               </Table>
             </div>
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} perPage={perPage} onPerPageChange={setPerPage} />
             </>
           )}
         </CardContent>
@@ -257,14 +314,14 @@ export default function PenjualanPage() {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="right" className="sm:max-w-md p-0 flex flex-col gap-0">
           <SheetHeader className="px-6 py-4 border-b">
-            <SheetTitle>{editingId ? "Edit Penjualan" : "Tambah Penjualan"}</SheetTitle>
+            <SheetTitle>{editingId ? "Ubah Data Penjualan" : "Tambah Penjualan Baru"}</SheetTitle>
             <SheetDescription>
               {editingId
-                ? "Ubah data transaksi penjualan di bawah ini."
-                : "Masukkan detail transaksi penjualan baru."}
+                ? "Perbarui informasi transaksi penjualan di bawah ini."
+                : "Isi formulir berikut untuk mencatat transaksi penjualan baru."}
             </SheetDescription>
           </SheetHeader>
-          
+
           <form id="penjualan-form" onSubmit={handleSubmit} className="flex flex-col gap-6 p-6 flex-1 overflow-y-auto">
             <div className="flex flex-col gap-3">
               <Label htmlFor="no_faktur">Nomor Faktur</Label>
@@ -282,13 +339,13 @@ export default function PenjualanPage() {
                 id="nama"
                 value={formData.nama}
                 onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
-                placeholder="Contoh: Pelanggan A"
+                placeholder="Contoh: Budi Santoso"
                 required
               />
             </div>
-            
+
             <div className="flex flex-col gap-3">
-              <Label htmlFor="total_harga">Total Harga (Rp)</Label>
+              <Label htmlFor="total_harga">Total Nilai (Rp)</Label>
               <Input
                 id="total_harga"
                 type="text"
@@ -303,7 +360,7 @@ export default function PenjualanPage() {
             </div>
 
             <div className="flex flex-col gap-3">
-              <Label htmlFor="kode_sales">Pilih Sales</Label>
+              <Label htmlFor="kode_sales">Nama Sales</Label>
               <select
                 id="kode_sales"
                 value={formData.kode_sales}
@@ -334,6 +391,23 @@ export default function PenjualanPage() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Penghapusan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anda akan menghapus data transaksi penjualan ini secara permanen. Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={executeDelete} className="bg-red-600 hover:bg-red-700">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

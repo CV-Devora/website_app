@@ -1,6 +1,6 @@
 "use client";
 
-import { DollarSign, ShoppingBag, ShoppingCart, Gem, TrendingUp, TrendingDown } from "lucide-react";
+import { DollarSign, ShoppingBag, ShoppingCart, Gem } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -21,17 +21,13 @@ interface StatsCardsProps {
 function StatCard({
   label,
   value,
-  change,
   icon: Icon,
-  trend,
   color,
   loading,
 }: {
   label: string;
   value: string;
-  change: string;
   icon: React.ElementType;
-  trend: "up" | "down";
   color: string;
   loading: boolean;
 }) {
@@ -47,23 +43,13 @@ function StatCard({
 
   return (
     <Card className="overflow-hidden">
-      <CardContent className="p-6">
+      <CardContent className="px-4">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">{label}</p>
             <p className="text-2xl font-bold tracking-tight text-foreground">
               {value}
-            </p>
-            <div className="flex items-center gap-1 text-xs">
-              {trend === "up" ? (
-                <TrendingUp className="size-3 text-green-500" />
-              ) : (
-                <TrendingDown className="size-3 text-red-500" />
-              )}
-              <span className={trend === "up" ? "text-green-600" : "text-red-500"}>
-                {change}
-              </span>
-            </div>
+            </p>           
           </div>
           <div className={cn("flex size-12 shrink-0 items-center justify-center rounded-xl", color)}>
             <Icon className="size-6 text-white" />
@@ -88,35 +74,27 @@ export function StatsCards({ data, loading }: StatsCardsProps) {
 
   const stats = [
     {
-      label: "Total Penjualan",
+      label: "Total Omzet Penjualan",
       value: formatRupiah(totalPenjualan),
-      change: "+12.5% bulan ini",
       icon: DollarSign,
-      trend: "up" as const,
       color: "bg-blue-500",
     },
     {
-      label: "Total Pembelian",
+      label: "Total Nilai Pembelian",
       value: formatRupiah(totalPembelian),
-      change: "+8.2% bulan ini",
       icon: ShoppingCart,
-      trend: "up" as const,
       color: "bg-indigo-500",
     },
     {
-      label: "Transaksi Penjualan",
+      label: "Jumlah Transaksi Penjualan",
       value: String(data?.penjualan_chart?.length ?? 0),
-      change: "+4.1% bulan ini",
       icon: ShoppingBag,
-      trend: "up" as const,
       color: "bg-violet-500",
     },
     {
-      label: "Total Barang",
+      label: "Total Stok Barang",
       value: String(totalBarang),
-      change: "+2.3% bulan ini",
       icon: Gem,
-      trend: "up" as const,
       color: "bg-cyan-500",
     },
   ];

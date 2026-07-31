@@ -23,7 +23,18 @@ import {
   SheetTitle,
   SheetFooter,
 } from "@/components/ui/sheet";
-import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Pencil, Trash2, Plus, Loader2, Search } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Karat {
   id: string;
@@ -41,7 +52,9 @@ export default function KaratPage() {
   const [formData, setFormData] = useState({ name: "", harga: "" });
   const [submitting, setSubmitting] = useState(false);
   const [page, setPage] = useState(1);
-  const [perPage] = useState(10);
+  const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchKarats();
@@ -100,25 +113,36 @@ export default function KaratPage() {
 
       if (editingId) {
         await api.karat.update(editingId, payload);
+        toast.success("Data karat berhasil diperbarui.");
       } else {
         await api.karat.create(payload);
+        toast.success("Data karat berhasil ditambahkan.");
       }
       await fetchKarats();
       handleCloseSheet();
     } catch (error) {
       console.error("Failed to save karat:", error);
+      toast.error("Gagal menyimpan data karat.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus karat ini?")) return;
+  const confirmDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const executeDelete = async () => {
+    if (!deleteId) return;
     try {
-      await api.karat.delete(id);
+      await api.karat.delete(deleteId);
+      toast.success("Data karat berhasil dihapus.");
       await fetchKarats();
     } catch (error) {
       console.error("Failed to delete karat:", error);
+      toast.error("Gagal menghapus data karat.");
+    } finally {
+      setDeleteId(null);
     }
   };
 
@@ -130,10 +154,14 @@ export default function KaratPage() {
     }).format(number);
   };
 
-  const totalPages = Math.ceil(karats.length / perPage);
+  const filteredData = useMemo(
+    () => karats.filter((k) => k.name.toLowerCase().includes(search.toLowerCase())),
+    [karats, search]
+  );
+  const totalPages = Math.ceil(filteredData.length / perPage);
   const paginatedData = useMemo(
-    () => karats.slice((page - 1) * perPage, page * perPage),
-    [karats, page, perPage]
+    () => filteredData.slice((page - 1) * perPage, page * perPage),
+    [filteredData, page, perPage]
   );
 
   return (
@@ -141,10 +169,10 @@ export default function KaratPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Kelola Karat
+            Manajemen Kadar Emas
           </h1>
           <p className="text-sm text-muted-foreground">
-            Tambah, ubah, dan atur harga untuk setiap jenis karat.
+            Kelola jenis kadar karat beserta harga jual per gram.
           </p>
         </div>
         {userRole === "admin" && (
@@ -157,7 +185,7 @@ export default function KaratPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Karat</CardTitle>
+          <CardTitle>Daftar Kadar Karat</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -166,11 +194,20 @@ export default function KaratPage() {
             </div>
           ) : (
             <>
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari kadar karat..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nama Karat</TableHead>
+                    <TableHead>Kadar Karat</TableHead>
                     <TableHead>Harga / Gram</TableHead>
                     {userRole === "admin" && (
                       <TableHead className="w-[100px] text-right">Aksi</TableHead>
@@ -178,10 +215,10 @@ export default function KaratPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {karats.length === 0 ? (
+                  {filteredData.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={userRole === "admin" ? 3 : 2} className="h-24 text-center">
-                        Tidak ada data karat.
+                        Belum ada data kadar karat.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -202,7 +239,7 @@ export default function KaratPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDelete(karat.id)}
+                              onClick={() => confirmDelete(karat.id)}
                               title="Hapus"
                             >
                               <Trash2 className="size-4 text-red-600" />
@@ -215,7 +252,7 @@ export default function KaratPage() {
                 </TableBody>
               </Table>
             </div>
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} perPage={perPage} onPerPageChange={setPerPage} />
             </>
           )}
         </CardContent>
@@ -224,17 +261,17 @@ export default function KaratPage() {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="right" className="sm:max-w-md p-0 flex flex-col gap-0">
           <SheetHeader className="px-6 py-4 border-b">
-            <SheetTitle>{editingId ? "Edit Karat" : "Tambah Karat"}</SheetTitle>
+            <SheetTitle>{editingId ? "Ubah Data Karat" : "Tambah Kadar Karat Baru"}</SheetTitle>
             <SheetDescription>
               {editingId
-                ? "Ubah nama dan harga karat di bawah ini."
-                : "Masukkan nama dan harga karat baru."}
+                ? "Perbarui nama dan harga kadar karat di bawah ini."
+                : "Isi formulir berikut untuk menambahkan kadar karat baru."}
             </SheetDescription>
           </SheetHeader>
           
           <form id="karat-form" onSubmit={handleSubmit} className="flex flex-col gap-6 p-6 flex-1 overflow-y-auto">
             <div className="flex flex-col gap-3">
-              <Label htmlFor="name">Nama Karat</Label>
+              <Label htmlFor="name">Kadar Karat</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -272,6 +309,23 @@ export default function KaratPage() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Karat</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anda akan menghapus data kadar karat ini secara permanen. Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={executeDelete} className="bg-red-600 hover:bg-red-700">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

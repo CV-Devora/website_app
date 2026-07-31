@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { toast } from "sonner";
 import { Plus, Trash2, Loader2, ArrowLeft } from "lucide-react";
 
 interface Karat {
@@ -126,7 +127,7 @@ export default function TambahPembelianPage() {
 
     const validItems = items.filter((item) => item.nama && item.berat && item.harga);
     if (validItems.length === 0) {
-      alert("Minimal satu barang harus diisi.");
+      toast.warning("Minimal satu barang harus diisi.");
       return;
     }
 
@@ -166,7 +167,7 @@ export default function TambahPembelianPage() {
       router.push("/pembelian");
     } catch (error) {
       console.error("Gagal menyimpan pembelian:", error);
-      alert("Gagal menyimpan pembelian.");
+      toast.error("Gagal menyimpan pembelian.");
     } finally {
       setSubmitting(false);
     }

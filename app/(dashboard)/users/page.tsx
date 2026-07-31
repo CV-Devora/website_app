@@ -23,7 +23,18 @@ import {
   SheetTitle,
   SheetFooter,
 } from "@/components/ui/sheet";
-import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Pencil, Trash2, Plus, Loader2, Search } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface User {
   id: string;
@@ -41,7 +52,9 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({ nama: "", username: "", password: "", role: "sales" });
   const [submitting, setSubmitting] = useState(false);
   const [page, setPage] = useState(1);
-  const [perPage] = useState(10);
+  const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -94,39 +107,53 @@ export default function UsersPage() {
 
       if (editingId) {
         await api.users.update(editingId, payload);
+        toast.success("Pengguna berhasil diperbarui.");
       } else {
         if (!formData.password) {
-          alert("Password diperlukan untuk pengguna baru!");
+          toast.warning("Password diperlukan untuk pengguna baru!");
           setSubmitting(false);
           return;
         }
         payload.password = formData.password;
         await api.users.create(payload);
+        toast.success("Pengguna berhasil ditambahkan.");
       }
       await fetchUsers();
       handleCloseSheet();
     } catch (error) {
       console.error("Failed to save user:", error);
-      alert("Gagal menyimpan pengguna.");
+      toast.error("Gagal menyimpan pengguna.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus pengguna ini?")) return;
+  const confirmDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const executeDelete = async () => {
+    if (!deleteId) return;
     try {
-      await api.users.delete(id);
+      await api.users.delete(deleteId);
+      toast.success("Pengguna berhasil dihapus.");
       await fetchUsers();
     } catch (error) {
       console.error("Failed to delete user:", error);
+      toast.error("Gagal menghapus pengguna.");
+    } finally {
+      setDeleteId(null);
     }
   };
 
-  const totalPages = Math.ceil(users.length / perPage);
+  const filteredData = useMemo(
+    () => users.filter((u) => u.nama.toLowerCase().includes(search.toLowerCase()) || u.username.toLowerCase().includes(search.toLowerCase())),
+    [users, search]
+  );
+  const totalPages = Math.ceil(filteredData.length / perPage);
   const paginatedData = useMemo(
-    () => users.slice((page - 1) * perPage, page * perPage),
-    [users, page, perPage]
+    () => filteredData.slice((page - 1) * perPage, page * perPage),
+    [filteredData, page, perPage]
   );
 
   return (
@@ -134,10 +161,10 @@ export default function UsersPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Kelola Pengguna
+            Manajemen Pengguna
           </h1>
           <p className="text-sm text-muted-foreground">
-            Tambah, ubah, dan atur akun untuk kasir dan sales.
+            Kelola akun, hak akses, dan peran pengguna sistem.
           </p>
         </div>
         <Button onClick={() => handleOpenSheet()}>
@@ -148,7 +175,7 @@ export default function UsersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Pengguna</CardTitle>
+          <CardTitle>Daftar Akun Pengguna</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -157,21 +184,30 @@ export default function UsersPage() {
             </div>
           ) : (
             <>
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari nama atau username..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nama</TableHead>
+                    <TableHead>Nama Lengkap</TableHead>
                     <TableHead>Username</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead className="w-[100px] text-right">Aksi</TableHead>
+                    <TableHead>Peran</TableHead>
+                    <TableHead className="w-[100px] text-right">Tindakan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.length === 0 ? (
+                  {filteredData.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="h-24 text-center">
-                        Tidak ada data pengguna.
+                        Tidak ada data pengguna yang terdaftar.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -192,7 +228,7 @@ export default function UsersPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(user.id)}
+                            onClick={() => confirmDelete(user.id)}
                             title="Hapus"
                           >
                             <Trash2 className="size-4 text-red-600" />
@@ -204,7 +240,7 @@ export default function UsersPage() {
                 </TableBody>
               </Table>
             </div>
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} perPage={perPage} onPerPageChange={setPerPage} />
             </>
           )}
         </CardContent>
@@ -213,11 +249,11 @@ export default function UsersPage() {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="right" className="sm:max-w-md p-0 flex flex-col gap-0">
           <SheetHeader className="px-6 py-4 border-b">
-            <SheetTitle>{editingId ? "Edit Pengguna" : "Tambah Pengguna"}</SheetTitle>
+            <SheetTitle>{editingId ? "Ubah Data Pengguna" : "Tambah Pengguna Baru"}</SheetTitle>
             <SheetDescription>
               {editingId
-                ? "Ubah data akun pengguna di bawah ini."
-                : "Masukkan detail untuk membuat akun pengguna baru."}
+                ? "Perbarui informasi akun pengguna di bawah ini."
+                : "Isi formulir berikut untuk membuat akun pengguna baru."}
             </SheetDescription>
           </SheetHeader>
 
@@ -258,7 +294,7 @@ export default function UsersPage() {
             )}
 
             <div className="flex flex-col gap-3">
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role">Peran Pengguna</Label>
               <select
                 id="role"
                 value={formData.role}
@@ -285,6 +321,22 @@ export default function UsersPage() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Pengguna</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anda akan menghapus akun pengguna ini secara permanen. Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={executeDelete} className="bg-red-600 hover:bg-red-700">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

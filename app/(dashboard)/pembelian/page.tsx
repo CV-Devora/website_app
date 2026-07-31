@@ -24,7 +24,18 @@ import {
   SheetTitle,
   SheetFooter,
 } from "@/components/ui/sheet";
-import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Pencil, Trash2, Plus, Loader2, CheckCircle, XCircle, Search } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface BarangItem {
   id: string;
@@ -44,6 +55,7 @@ interface Pembelian {
   nama: string;
   tipe_pemasok: string;
   harga_deal: number;
+  is_approve: boolean;
   barang?: BarangItem[];
   created_at?: string;
 }
@@ -66,9 +78,20 @@ export default function PembelianPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [perPage] = useState(10);
+  const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [approveId, setApproveId] = useState<string | null>(null);
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
 
   useEffect(() => {
+    const raw = localStorage.getItem("user");
+    if (raw) {
+      try {
+        const user = JSON.parse(raw);
+        setCurrentRole(user.role?.toLowerCase());
+      } catch {}
+    }
     fetchPembelians();
   }, []);
 
@@ -129,26 +152,54 @@ export default function PembelianPage() {
 
       if (editingId) {
         await api.pembelian.update(editingId, payload);
+        toast.success("Data pembelian berhasil diperbarui.");
       } else {
         await api.pembelian.create(payload);
+        toast.success("Data pembelian berhasil ditambahkan.");
       }
       await fetchPembelians();
       handleCloseSheet();
     } catch (error) {
       console.error("Failed to save pembelian:", error);
-      alert("Gagal menyimpan pembelian.");
+      toast.error("Gagal menyimpan pembelian.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus data pembelian ini?")) return;
+  const confirmApprove = (id: string) => {
+    setApproveId(id);
+  };
+
+  const executeApprove = async () => {
+    if (!approveId) return;
     try {
-      await api.pembelian.delete(id);
+      await api.pembelian.approve(approveId);
+      toast.success("Transaksi pembelian berhasil disetujui.");
+      await fetchPembelians();
+    } catch (error) {
+      console.error("Failed to approve pembelian:", error);
+      toast.error("Gagal menyetujui pembelian.");
+    } finally {
+      setApproveId(null);
+    }
+  };
+
+  const confirmDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const executeDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await api.pembelian.delete(deleteId);
+      toast.success("Data pembelian berhasil dihapus.");
       await fetchPembelians();
     } catch (error) {
       console.error("Failed to delete pembelian:", error);
+      toast.error("Gagal menghapus pembelian.");
+    } finally {
+      setDeleteId(null);
     }
   };
 
@@ -160,7 +211,7 @@ export default function PembelianPage() {
       setDetailPembelian(res.data as Pembelian);
     } catch (error) {
       console.error("Failed to fetch detail:", error);
-      alert("Gagal memuat detail pembelian.");
+      toast.error("Gagal memuat detail pembelian.");
       setDetailOpen(false);
     } finally {
       setDetailLoading(false);
@@ -175,10 +226,19 @@ export default function PembelianPage() {
     }).format(number);
   };
 
-  const totalPages = Math.ceil(pembelians.length / perPage);
+  const isSales = currentRole === "sales";
+  const isKasir = currentRole === "kasir";
+  const isAdmin = currentRole === "admin";
+  const canDelete = isSales || isAdmin;
+
+  const filteredData = useMemo(
+    () => pembelians.filter((p) => p.no_faktur.toLowerCase().includes(search.toLowerCase()) || p.nama.toLowerCase().includes(search.toLowerCase())),
+    [pembelians, search]
+  );
+  const totalPages = Math.ceil(filteredData.length / perPage);
   const paginatedData = useMemo(
-    () => pembelians.slice((page - 1) * perPage, page * perPage),
-    [pembelians, page, perPage]
+    () => filteredData.slice((page - 1) * perPage, page * perPage),
+    [filteredData, page, perPage]
   );
 
   return (
@@ -186,21 +246,23 @@ export default function PembelianPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Data Pembelian
+            Transaksi Pembelian
           </h1>
           <p className="text-sm text-muted-foreground">
-            Kelola transaksi pembelian dari supplier atau pelanggan.
+            Pantau dan kelola seluruh transaksi pembelian dari pemasok.
           </p>
         </div>
-        <Button onClick={() => router.push("/pembelian/tambah")}>
-          <Plus className="mr-2 size-4" />
-          Tambah Pembelian
-        </Button>
+        {isSales && (
+          <Button onClick={() => router.push("/pembelian/tambah")}>
+            <Plus className="mr-2 size-4" />
+            Buat Pembelian Baru
+          </Button>
+        )}
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Pembelian</CardTitle>
+          <CardTitle>Riwayat Transaksi Pembelian</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -209,6 +271,15 @@ export default function PembelianPage() {
             </div>
           ) : (
             <>
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari no. faktur atau nama pemasok..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -216,15 +287,16 @@ export default function PembelianPage() {
                     <TableHead>No. Faktur</TableHead>
                     <TableHead>Nama Pemasok</TableHead>
                     <TableHead>Tipe Pemasok</TableHead>
-                    <TableHead>Total Harga</TableHead>
-                    <TableHead className="w-[100px] text-center">Aksi</TableHead>
+                    <TableHead>Harga Kesepakatan</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[140px] text-center">Tindakan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pembelians.length === 0 ? (
+                  {filteredData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
-                        Tidak ada data pembelian.
+                      <TableCell colSpan={6} className="h-24 text-center">
+                        Belum ada data transaksi pembelian.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -234,6 +306,19 @@ export default function PembelianPage() {
                         <TableCell>{item.nama}</TableCell>
                         <TableCell className="capitalize">{item.tipe_pemasok}</TableCell>
                         <TableCell>{formatRupiah(item.harga_deal)}</TableCell>
+                        <TableCell>
+                          {item.is_approve ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                              <CheckCircle className="size-3" />
+                              Disetujui
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">
+                              <XCircle className="size-3" />
+                              Pending
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right space-x-1">
                           <Button
                             variant="ghost"
@@ -243,22 +328,36 @@ export default function PembelianPage() {
                           >
                             <svg className="size-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenSheet(item)}
-                            title="Edit"
-                          >
-                            <Pencil className="size-4 text-blue-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(item.id)}
-                            title="Hapus"
-                          >
-                            <Trash2 className="size-4 text-red-600" />
-                          </Button>
+                          {isKasir && !item.is_approve && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => confirmApprove(item.id)}
+                              title="Setujui"
+                            >
+                              <CheckCircle className="size-4 text-green-600" />
+                            </Button>
+                          )}
+                          {isSales && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenSheet(item)}
+                              title="Edit"
+                            >
+                              <Pencil className="size-4 text-blue-600" />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => confirmDelete(item.id)}
+                              title="Hapus"
+                            >
+                              <Trash2 className="size-4 text-red-600" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))
@@ -266,7 +365,7 @@ export default function PembelianPage() {
                 </TableBody>
               </Table>
             </div>
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} perPage={perPage} onPerPageChange={setPerPage} />
             </>
           )}
         </CardContent>
@@ -431,6 +530,40 @@ export default function PembelianPage() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Pembelian</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus data pembelian ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={executeDelete} className="bg-red-600 hover:bg-red-700">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!approveId} onOpenChange={(open) => !open && setApproveId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Setujui Pembelian</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menyetujui transaksi pembelian ini?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={executeApprove} className="bg-green-600 hover:bg-green-700">
+              Setujui
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

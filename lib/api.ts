@@ -63,6 +63,8 @@ export const api = {
       apiFetch<{ code: number; data: unknown }>(`/pembelian/${id}`, { method: "PUT", body: JSON.stringify(body) }),
     delete: (id: string) =>
       apiFetch<{ code: number }>(`/pembelian/${id}`, { method: "DELETE" }),
+    approve: (id: string) =>
+      apiFetch<{ code: number; data: unknown }>(`/pembelian/${id}/approve`, { method: "PUT" }),
   },
   penjualan: {
     list: () => apiFetch<{ code: number; data: unknown[] }>("/penjualan"),
@@ -97,6 +99,7 @@ export const api = {
   },
   baki: {
     list: () => apiFetch<{ code: number; data: unknown[] }>("/baki"),
+    get: (id: string) => apiFetch<{ code: number; data: unknown }>(`/baki/${id}`),
     create: (body: unknown) =>
       apiFetch<{ code: number; data: unknown }>("/baki", { method: "POST", body: JSON.stringify(body) }),
     update: (id: string, body: unknown) =>
