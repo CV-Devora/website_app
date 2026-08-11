@@ -1,12 +1,24 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// Routes yang membutuhkan autentikasi
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/baki",
+  "/barang",
+  "/karat",
+  "/pembelian",
+  "/penjualan",
+  "/users",
+];
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
   const { pathname } = request.nextUrl;
 
   const isLoginPage = pathname === "/login";
-  const isPublicAsset = pathname.startsWith("/_next") ||
+  const isPublicAsset =
+    pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
     pathname === "/favicon.ico";
 
@@ -14,16 +26,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Unauthenticated: redirect to login
-  if (!token && !isLoginPage) {
+  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
+    pathname === prefix || pathname.startsWith(prefix + "/")
+  );
+
+  // Halaman terproteksi: redirect ke login jika belum login
+  if (isProtected && !token) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Authenticated: redirect away from login
+  // Sudah login & akses halaman login: redirect ke dashboard
   if (token && isLoginPage) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();

@@ -25,7 +25,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, Loader2, Search } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, Search, FileDown } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,6 +71,10 @@ export default function PenjualanPage() {
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [appliedRange, setAppliedRange] = useState<{ from: string; to: string } | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem("user");
@@ -83,19 +87,58 @@ export default function PenjualanPage() {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (range?: { from: string; to: string } | null) => {
+    const r = range !== undefined ? range : appliedRange;
     try {
       setLoading(true);
       const [resPenjualan, resUsers] = await Promise.all([
-        api.penjualan.list(),
+        api.penjualan.list(r?.from, r?.to),
         api.users.list(),
       ]);
       setPenjualans(resPenjualan.data as Penjualan[]);
       setUsers(resUsers.data as User[]);
     } catch (error) {
       console.error("Failed to fetch data:", error);
+      toast.error("Gagal memuat data penjualan.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const applyDateRange = async () => {
+    if (!dateFrom || !dateTo) {
+      toast.error("Pilih tanggal awal dan tanggal akhir terlebih dahulu.");
+      return;
+    }
+    if (dateFrom > dateTo) {
+      toast.error("Tanggal awal tidak boleh setelah tanggal akhir.");
+      return;
+    }
+    const range = { from: dateFrom, to: dateTo };
+    setAppliedRange(range);
+    setPage(1);
+    await fetchData(range);
+  };
+
+  const resetDateRange = async () => {
+    setDateFrom("");
+    setDateTo("");
+    setAppliedRange(null);
+    setPage(1);
+    await fetchData(null);
+  };
+
+  const handleExport = async () => {
+    if (!appliedRange) return;
+    setExporting(true);
+    try {
+      await api.penjualan.export(appliedRange.from, appliedRange.to);
+      toast.success("Data penjualan berhasil diexport ke Excel.");
+    } catch (error) {
+      console.error("Failed to export penjualan:", error);
+      toast.error("Gagal mengexport data penjualan.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -150,8 +193,7 @@ export default function PenjualanPage() {
         toast.success("Data penjualan berhasil ditambahkan.");
       }
 
-      const res = await api.penjualan.list();
-      setPenjualans(res.data as Penjualan[]);
+      await fetchData();
 
       handleCloseSheet();
     } catch (error) {
@@ -171,8 +213,7 @@ export default function PenjualanPage() {
     try {
       await api.penjualan.delete(deleteId);
       toast.success("Data penjualan berhasil dihapus.");
-      const res = await api.penjualan.list();
-      setPenjualans(res.data as Penjualan[]);
+      await fetchData();
     } catch (error) {
       console.error("Failed to delete penjualan:", error);
       toast.error("Gagal menghapus penjualan.");
@@ -231,8 +272,21 @@ export default function PenjualanPage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex justify-between">
           <CardTitle>Riwayat Transaksi Penjualan</CardTitle>
+          {appliedRange && (
+            <>
+              <Button
+                variant="default"
+                className="h-9"
+                onClick={handleExport}
+                disabled={exporting}
+              >
+                {exporting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <FileDown className="mr-2 size-4" />}
+                Export Excel
+              </Button>
+            </>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -241,6 +295,37 @@ export default function PenjualanPage() {
             </div>
           ) : (
             <>
+            <div className="mb-4 flex flex-col gap-3 rounded-md py-3">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="date-from" className="text-xs">Tanggal Awal</Label>
+                  <Input
+                    id="date-from"
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="h-9 w-[170px]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="date-to" className="text-xs">Tanggal Akhir</Label>
+                  <Input
+                    id="date-to"
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="h-9 w-[170px]"
+                  />
+                </div>
+                <Button className="h-9" onClick={applyDateRange}>Cari</Button>
+              </div>
+              {appliedRange && (
+                <p className="text-xs text-muted-foreground">
+                  Menampilkan data dari <span className="font-medium">{appliedRange.from}</span> s.d.{" "}
+                  <span className="font-medium">{appliedRange.to}</span>.
+                </p>
+              )}
+            </div>
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input

@@ -14,7 +14,7 @@ export function AppHeader() {
     document.cookie = "token=; path=/; max-age=0";
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    router.push("/login");
+    router.push("/");
   };
 
   return (

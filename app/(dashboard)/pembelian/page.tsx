@@ -25,7 +25,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, Loader2, CheckCircle, XCircle, Search } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, CheckCircle, XCircle, Search, FileDown } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,11 +37,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+interface Karat {
+  id: string;
+  name: string;
+  harga: number;
+}
+
 interface BarangItem {
   id: string;
   barcode: string;
   nama: string;
-  karat: number;
+  karat: string | number | Karat;
   berat: number;
   harga: number;
   photo: string;
@@ -56,12 +62,19 @@ interface Pembelian {
   tipe_pemasok: string;
   harga_deal: number;
   is_approve: boolean;
-  barang?: BarangItem[];
+  barang?: BarangItem;
   created_at?: string;
 }
 
 export default function PembelianPage() {
   const router = useRouter();
+
+  const getKaratName = (karat: string | number | Karat | null | undefined) => {
+    if (!karat) return "-";
+    if (typeof karat === "object") return karat.name;
+    return String(karat);
+  };
+
   const [pembelians, setPembelians] = useState<Pembelian[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -83,6 +96,10 @@ export default function PembelianPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [approveId, setApproveId] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [appliedRange, setAppliedRange] = useState<{ from: string; to: string } | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem("user");
@@ -95,15 +112,54 @@ export default function PembelianPage() {
     fetchPembelians();
   }, []);
 
-  const fetchPembelians = async () => {
+  const fetchPembelians = async (range?: { from: string; to: string } | null) => {
+    const r = range !== undefined ? range : appliedRange;
     try {
       setLoading(true);
-      const res = await api.pembelian.list();
+      const res = await api.pembelian.list(r?.from, r?.to);
       setPembelians(res.data as Pembelian[]);
     } catch (error) {
       console.error("Failed to fetch pembelian:", error);
+      toast.error("Gagal memuat data pembelian.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const applyDateRange = async () => {
+    if (!dateFrom || !dateTo) {
+      toast.error("Pilih tanggal awal dan tanggal akhir terlebih dahulu.");
+      return;
+    }
+    if (dateFrom > dateTo) {
+      toast.error("Tanggal awal tidak boleh setelah tanggal akhir.");
+      return;
+    }
+    const range = { from: dateFrom, to: dateTo };
+    setAppliedRange(range);
+    setPage(1);
+    await fetchPembelians(range);
+  };
+
+  const resetDateRange = async () => {
+    setDateFrom("");
+    setDateTo("");
+    setAppliedRange(null);
+    setPage(1);
+    await fetchPembelians(null);
+  };
+
+  const handleExport = async () => {
+    if (!appliedRange) return;
+    setExporting(true);
+    try {
+      await api.pembelian.export(appliedRange.from, appliedRange.to);
+      toast.success("Data pembelian berhasil diexport ke Excel.");
+    } catch (error) {
+      console.error("Failed to export pembelian:", error);
+      toast.error("Gagal mengexport data pembelian.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -261,8 +317,21 @@ export default function PembelianPage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex justify-between">
           <CardTitle>Riwayat Transaksi Pembelian</CardTitle>
+          {appliedRange && (
+            <>
+              <Button
+                variant="default"
+                className="h-9"
+                onClick={handleExport}
+                disabled={exporting}
+              >
+                {exporting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <FileDown className="mr-2 size-4" />}
+                Export Excel
+              </Button>
+            </>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -271,6 +340,37 @@ export default function PembelianPage() {
             </div>
           ) : (
             <>
+            <div className="mb-4 flex flex-col gap-3 rounded-md py-3">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="date-from" className="text-xs">Tanggal Awal</Label>
+                  <Input
+                    id="date-from"
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="h-9 w-[170px]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="date-to" className="text-xs">Tanggal Akhir</Label>
+                  <Input
+                    id="date-to"
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="h-9 w-[170px]"
+                  />
+                </div>
+                <Button className="h-9" onClick={applyDateRange}>Cari</Button>
+              </div>
+              {appliedRange && (
+                <p className="text-xs text-muted-foreground">
+                  Menampilkan data dari <span className="font-medium">{appliedRange.from}</span> s.d.{" "}
+                  <span className="font-medium">{appliedRange.to}</span>.
+                </p>
+              )}
+            </div>
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -488,41 +588,37 @@ export default function PembelianPage() {
                   </div>
 
                   <div>
-                    <h4 className="text-sm font-semibold mb-2">Daftar Barang</h4>
-                    <div className="rounded-md border mb-6">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Barcode</TableHead>
-                            <TableHead>Nama</TableHead>
-                            <TableHead>Karat</TableHead>
-                            <TableHead>Berat (gr)</TableHead>
-                            <TableHead>Harga</TableHead>
-                            <TableHead>Kondisi</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody className="overflow-y-auto">
-                          {detailPembelian.barang && detailPembelian.barang.length > 0 ? (
-                            detailPembelian.barang.map((b) => (
-                              <TableRow key={b.id}>
-                                <TableCell className="text-xs">{b.barcode}</TableCell>
-                                <TableCell>{b.nama}</TableCell>
-                                <TableCell>{b.karat}</TableCell>
-                                <TableCell>{b.berat.toFixed(3)}</TableCell>
-                                <TableCell>{formatRupiah(b.harga)}</TableCell>
-                                <TableCell className="capitalize">{b.kondisi}</TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={6} className="h-16 text-center text-muted-foreground">
-                                Tidak ada barang.
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
+                    <h4 className="text-sm font-semibold mb-2">Detail Barang</h4>
+                    {detailPembelian.barang ? (
+                      <div className="rounded-md border p-4 grid grid-cols-2 gap-x-6 gap-y-3">
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Barcode</Label>
+                          <p className="font-medium text-sm font-mono">{detailPembelian.barang.barcode}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Nama Barang</Label>
+                          <p className="font-medium text-sm">{detailPembelian.barang.nama}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Karat</Label>
+                          <p className="font-medium text-sm">{getKaratName(detailPembelian.barang.karat)}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Berat (gr)</Label>
+                          <p className="font-medium text-sm">{detailPembelian.barang.berat.toFixed(3)}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Harga</Label>
+                          <p className="font-medium text-sm">{formatRupiah(detailPembelian.barang.harga)}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Kondisi</Label>
+                          <p className="font-medium text-sm capitalize">{detailPembelian.barang.kondisi}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4 border rounded-md">Tidak ada barang.</p>
+                    )}
                   </div>
                 </div>
               ) : null}

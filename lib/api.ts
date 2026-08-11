@@ -7,6 +7,40 @@ function getAuthHeaders(): HeadersInit {
   return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 }
 
+function toQuery(params: Record<string, string | undefined>): string {
+  const qs = Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== "")
+    .map(([k, v]) => `${k}=${encodeURIComponent(v as string)}`)
+    .join("&");
+  return qs ? `?${qs}` : "";
+}
+
+async function downloadFile(path: string, fallbackName: string): Promise<void> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "";
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    let message = "Gagal mengunduh file";
+    try {
+      const json = await res.json();
+      message = json.message ?? message;
+    } catch {
+      // ignore non-JSON error body
+    }
+    throw new Error(message);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fallbackName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
@@ -18,7 +52,13 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     window.location.href = "/login";
     throw new Error("unauthorized");
   }
-  const json = await res.json();
+  const text = await res.text();
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch (e) {
+    throw new Error(`API error (invalid JSON): ${text.slice(0, 100)}`);
+  }
   if (!res.ok) throw new Error(json.message ?? "API error");
   return json;
 }
@@ -53,9 +93,31 @@ export const api = {
       apiFetch<{ code: number; data: unknown }>(`/barang/${id}`, { method: "PUT", body: JSON.stringify(body) }),
     delete: (id: string) =>
       apiFetch<{ code: number }>(`/barang/${id}`, { method: "DELETE" }),
+    export: () =>
+      downloadFile("/barang/export", `daftar_barang.xlsx`),
+    importFile: async (file: File) => {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "";
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`${API_BASE}/barang/import`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const text = await res.text();
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Import gagal (invalid JSON): ${text.slice(0, 100)}`);
+      }
+      if (!res.ok) throw new Error(json.message ?? "Import gagal");
+      return json;
+    },
   },
   pembelian: {
-    list: () => apiFetch<{ code: number; data: unknown[] }>("/pembelian"),
+    list: (from?: string, to?: string) =>
+      apiFetch<{ code: number; data: unknown[] }>(`/pembelian${toQuery({ from, to })}`),
     get: (id: string) => apiFetch<{ code: number; data: unknown }>(`/pembelian/${id}`),
     create: (body: unknown) =>
       apiFetch<{ code: number; data: unknown }>("/pembelian", { method: "POST", body: JSON.stringify(body) }),
@@ -65,15 +127,20 @@ export const api = {
       apiFetch<{ code: number }>(`/pembelian/${id}`, { method: "DELETE" }),
     approve: (id: string) =>
       apiFetch<{ code: number; data: unknown }>(`/pembelian/${id}/approve`, { method: "PUT" }),
+    export: (from: string, to: string) =>
+      downloadFile(`/pembelian/export${toQuery({ from, to })}`, `pembelian_${from}_${to}.xlsx`),
   },
   penjualan: {
-    list: () => apiFetch<{ code: number; data: unknown[] }>("/penjualan"),
+    list: (from?: string, to?: string) =>
+      apiFetch<{ code: number; data: unknown[] }>(`/penjualan${toQuery({ from, to })}`),
     create: (body: unknown) =>
       apiFetch<{ code: number; data: unknown }>("/penjualan", { method: "POST", body: JSON.stringify(body) }),
     update: (id: string, body: unknown) =>
       apiFetch<{ code: number; data: unknown }>(`/penjualan/${id}`, { method: "PUT", body: JSON.stringify(body) }),
     delete: (id: string) =>
       apiFetch<{ code: number }>(`/penjualan/${id}`, { method: "DELETE" }),
+    export: (from: string, to: string) =>
+      downloadFile(`/penjualan/export${toQuery({ from, to })}`, `penjualan_${from}_${to}.xlsx`),
   },
   karat: {
     list: () => apiFetch<{ code: number; data: unknown[] }>("/karat"),

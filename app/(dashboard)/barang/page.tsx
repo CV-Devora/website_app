@@ -17,7 +17,8 @@ import {
 import { Pagination } from "@/components/ui/pagination";
 
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, Loader2, Search } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, Search, Upload, FileDown } from "lucide-react";
+import { BarangImportDialog } from "@/components/barang-import-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,10 +47,12 @@ interface Barang {
   nama: string;
   karat: number;
   berat: number;
+  berat_atribut: number;
   harga: number;
   kondisi: string;
   baki_id: string;
   photo: string;
+  grup: string;
 }
 
 export default function BarangPage() {
@@ -61,6 +64,11 @@ export default function BarangPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importKey, setImportKey] = useState(0);
+  const [exporting, setExporting] = useState(false);
+
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedBarang, setSelectedBarang] = useState<Barang | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -70,18 +78,16 @@ export default function BarangPage() {
     nama: "",
     karat_id: "",
     berat: "",
+    berat_atribut: "",
     harga: "",
     kondisi: "baru",
     baki_id: "",
     photo: "",
+    grup: "",
   });
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
 
   const fetchInitialData = async () => {
     try {
@@ -109,6 +115,19 @@ export default function BarangPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchInitialData();
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setIsAdmin(user.role?.toLowerCase() === "admin");
+      } catch {
+        console.error("Failed to parse user from local storage");
+      }
+    }
+  }, []);
 
   const fetchBarangs = async () => {
     try {
@@ -142,14 +161,16 @@ export default function BarangPage() {
         nama: barang.nama,
         karat_id: (barang as any).karat_id || (barang.karat && (barang.karat as any).id) || "",
         berat: barang.berat?.toString() || "",
+        berat_atribut: barang.berat_atribut?.toString() || "",
         harga: barang.harga?.toString() || "",
         kondisi: barang.kondisi || "baru",
         baki_id: barang.baki_id || "",
         photo: barang.photo || "",
+        grup: barang.grup || "",
       });
     } else {
       setEditingId(null);
-      
+
       // Fetch latest barcode when creating new
       let nextBarcode = "";
       try {
@@ -164,10 +185,12 @@ export default function BarangPage() {
         nama: "",
         karat_id: "",
         berat: "",
+        berat_atribut: "",
         harga: "",
         kondisi: "baru",
         baki_id: "",
         photo: "",
+        grup: "",
       });
     }
     setSheetOpen(true);
@@ -200,10 +223,37 @@ export default function BarangPage() {
     }
   };
 
+  const fetchBakiList = async () => {
+    try {
+      const res = await api.baki.list();
+      setBakiList(res.data as Baki[]);
+    } catch (error) {
+      console.error("Failed to fetch baki:", error);
+    }
+  };
+
+  const handleImported = async () => {
+    await fetchBarangs();
+    await fetchBakiList();
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await api.barang.export();
+      toast.success("Data barang berhasil diexport ke Excel.");
+    } catch (error) {
+      console.error("Failed to export barang:", error);
+      toast.error("Gagal mengexport data barang.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nama || !formData.berat || !formData.harga) return;
-    
+
     setSubmitting(true);
     try {
       const payload = {
@@ -211,10 +261,12 @@ export default function BarangPage() {
         nama: formData.nama,
         karat_id: formData.karat_id || null,
         berat: parseFloat(formData.berat.replace(",", ".")) || 0,
+        berat_atribut: parseFloat(formData.berat_atribut.replace(",", ".")) || 0,
         harga: parseInt(formData.harga.replace(/\D/g, ""), 10) || 0,
         kondisi: formData.kondisi,
         baki_id: formData.baki_id || null,
         photo: formData.photo,
+        grup: formData.grup || null,
       };
 
       if (editingId) {
@@ -288,10 +340,22 @@ export default function BarangPage() {
             Kelola stok dan data seluruh perhiasan di inventaris toko.
           </p>
         </div>
-        <Button onClick={() => handleOpenSheet()}>
-          <Plus className="mr-2 size-4" />
-          Tambah Barang Baru
-        </Button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={exporting}>
+            {exporting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <FileDown className="mr-2 size-4" />}
+            Export Excel
+          </Button>
+          {isAdmin && (
+            <Button variant="outline" onClick={() => { setImportKey((k) => k + 1); setImportOpen(true); }}>
+              <Upload className="mr-2 size-4" />
+              Import Excel
+            </Button>
+          )}
+          <Button onClick={() => handleOpenSheet()}>
+            <Plus className="mr-2 size-4" />
+            Tambah Barang
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -305,77 +369,81 @@ export default function BarangPage() {
             </div>
           ) : (
             <>
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                placeholder="Cari barcode atau nama barang..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Barcode</TableHead>
-                    <TableHead>Nama Barang</TableHead>
-                    <TableHead>Kadar</TableHead>
-                    <TableHead>Berat (gr)</TableHead>
-                    <TableHead>Harga Jual</TableHead>
-                    <TableHead>Kondisi</TableHead>
-                    <TableHead className="w-[100px] text-center">Tindakan</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredData.length === 0 ? (
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari barcode atau nama barang..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={8} className="h-24 text-center">
-                        Belum ada data barang dalam inventaris.
-                      </TableCell>
+                      <TableHead>Barcode</TableHead>
+                      <TableHead>Nama Barang</TableHead>
+                      <TableHead>Kadar</TableHead>
+                      <TableHead>Berat (gr)</TableHead>
+                      <TableHead>Berat Atribut (gr)</TableHead>
+                      <TableHead>Group</TableHead>
+                      <TableHead>Harga Jual</TableHead>
+                      <TableHead>Kondisi</TableHead>
+                      <TableHead className="w-[100px] text-center">Tindakan</TableHead>
                     </TableRow>
-                  ) : (
-                    paginatedData.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium text-sm">{item.barcode}</TableCell>
-                        <TableCell className="font-medium">{item.nama}</TableCell>
-                        <TableCell>{getKaratName(item.karat)}</TableCell>
-                        <TableCell>{item.berat}</TableCell>
-                        <TableCell>{formatRupiah(item.harga)}</TableCell>
-                        <TableCell className="capitalize">{item.kondisi}</TableCell>
-                        <TableCell className="text-right space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenDetail(item)}
-                            title="Detail"
-                          >
-                            <svg className="size-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenSheet(item)}
-                            title="Edit"
-                          >
-                            <Pencil className="size-4 text-blue-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => confirmDelete(item.id)}
-                            title="Hapus"
-                          >
-                            <Trash2 className="size-4 text-red-600" />
-                          </Button>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="h-24 text-center">
+                          Belum ada data barang dalam inventaris.
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} perPage={perPage} onPerPageChange={setPerPage} />
+                    ) : (
+                      paginatedData.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium text-sm">{item.barcode}</TableCell>
+                          <TableCell className="font-medium">{item.nama}</TableCell>
+                          <TableCell>{getKaratName(item.karat)}</TableCell>
+                          <TableCell>{item.berat}</TableCell>
+                          <TableCell>{item.berat_atribut ?? 0}</TableCell>
+                          <TableCell>{(item as any).grup || "-"}</TableCell>
+                          <TableCell>{formatRupiah(item.harga)}</TableCell>
+                          <TableCell className="capitalize">{item.kondisi}</TableCell>
+                          <TableCell className="text-right space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenDetail(item)}
+                              title="Detail"
+                            >
+                              <svg className="size-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenSheet(item)}
+                              title="Edit"
+                            >
+                              <Pencil className="size-4 text-blue-600" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => confirmDelete(item.id)}
+                              title="Hapus"
+                            >
+                              <Trash2 className="size-4 text-red-600" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} perPage={perPage} onPerPageChange={setPerPage} />
             </>
           )}
         </CardContent>
@@ -454,6 +522,17 @@ export default function BarangPage() {
               </div>
 
               <div className="flex flex-col gap-2">
+                <Label htmlFor="berat_atribut">Berat Atribut (gr)</Label>
+                <Input
+                  id="berat_atribut"
+                  type="text"
+                  value={formData.berat_atribut}
+                  onChange={(e) => setFormData({ ...formData, berat_atribut: e.target.value })}
+                  placeholder="0.000"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="harga">Harga (Rp)</Label>
                 <Input
                   id="harga"
@@ -499,6 +578,17 @@ export default function BarangPage() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="grup">Group</Label>
+                <Input
+                  id="grup"
+                  type="text"
+                  value={formData.grup}
+                  onChange={(e) => setFormData({ ...formData, grup: e.target.value })}
+                  placeholder="Contoh: GRP-001"
+                />
               </div>
 
               <div className="flex flex-col gap-2">
@@ -583,6 +673,10 @@ export default function BarangPage() {
                   <p className="font-medium text-base">{selectedBarang.berat} gr</p>
                 </div>
                 <div className="space-y-1">
+                  <span className="text-sm font-semibold text-muted-foreground">Berat Atribut</span>
+                  <p className="font-medium text-base">{selectedBarang.berat_atribut ?? 0} gr</p>
+                </div>
+                <div className="space-y-1">
                   <span className="text-sm font-semibold text-muted-foreground">Harga</span>
                   <p className="font-medium text-base">{formatRupiah(selectedBarang.harga)}</p>
                 </div>
@@ -590,11 +684,17 @@ export default function BarangPage() {
                   <span className="text-sm font-semibold text-muted-foreground">Kondisi</span>
                   <p className="font-medium text-base capitalize">{selectedBarang.kondisi}</p>
                 </div>
+                <div className="space-y-1">
+                  <span className="text-sm font-semibold text-muted-foreground">Group</span>
+                  <p className="font-medium text-base">{selectedBarang.grup || "-"}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <BarangImportDialog key={importKey} open={importOpen} onOpenChange={setImportOpen} onImported={handleImported} />
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>

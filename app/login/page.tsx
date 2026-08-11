@@ -30,7 +30,7 @@ export default function LoginPage() {
         if (res.data.user) {
           localStorage.setItem("user", JSON.stringify(res.data.user));
         }
-        router.push("/");
+        router.push("/dashboard");
       } else {
         setError("Login gagal. Periksa kembali kredensial Anda.");
       }
