@@ -51,11 +51,29 @@ export default function TambahPembelianPage() {
     no_faktur: "",
     nama: "",
     tipe_pemasok: "supplier",
+    berat_nota: "",
+    harga_nota: "",
+    harga_rata: "",
+    tipe_pembayaran: "cash",
+    jumlah_pembayaran: "",
   });
 
   const formatNumber = (val: string) => {
     if (!val) return val;
     return val.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const computeHargaRata = (berat: string, harga: string) => {
+    const beratNum = parseFloat(berat.replace(",", ".")) || 0;
+    const hargaNum = parseInt(harga.replace(/\D/g, ""), 10) || 0;
+    if (beratNum <= 0) return "";
+    return Math.round(hargaNum / beratNum).toString();
+  };
+
+  const updateNotaField = (field: "berat_nota" | "harga_nota", value: string) => {
+    const next = { ...formData, [field]: value };
+    next.harga_rata = computeHargaRata(next.berat_nota, next.harga_nota);
+    setFormData(next);
   };
 
   const [barcodeStart, setBarcodeStart] = useState(0);
@@ -157,6 +175,11 @@ export default function TambahPembelianPage() {
         nama: formData.nama,
         tipe_pemasok: formData.tipe_pemasok,
         harga_deal: totalHarga,
+        berat_nota: parseFloat(formData.berat_nota.replace(",", ".")) || 0,
+        harga_nota: parseInt(formData.harga_nota.replace(/\D/g, ""), 10) || 0,
+        harga_rata: parseInt(formData.harga_rata.replace(/\D/g, ""), 10) || 0,
+        tipe_pembayaran: formData.tipe_pembayaran,
+        jumlah_pembayaran: parseInt(formData.jumlah_pembayaran.replace(/\D/g, ""), 10) || 0,
         barang: expandedBarang.map((item) => ({
           ...item,
           barcode: String(barcodeCounter++).padStart(9, "0"),
@@ -238,6 +261,71 @@ export default function TambahPembelianPage() {
                 <option value="supplier">Supplier</option>
                 <option value="pelanggan">Pelanggan</option>
               </select>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="berat_nota">Berat Nota (gr)</Label>
+              <Input
+                id="berat_nota"
+                type="text"
+                value={formData.berat_nota}
+                onChange={(e) => updateNotaField("berat_nota", e.target.value)}
+                placeholder="0.000"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="harga_nota">Harga Nota (Rp)</Label>
+              <Input
+                id="harga_nota"
+                type="text"
+                value={formatNumber(formData.harga_nota)}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "");
+                  updateNotaField("harga_nota", raw);
+                }}
+                placeholder="0"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="harga_rata">Harga Rata (Rp)</Label>
+              <div
+                id="harga_rata"
+                className="flex h-10 w-full items-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm text-muted-foreground"
+              >
+                {formData.harga_rata ? `Rp ${formatNumber(formData.harga_rata)}` : "-"}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Otomatis dihitung dari Harga Nota &divide; Berat Nota.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="tipe_pembayaran">Tipe Pembayaran</Label>
+              <select
+                id="tipe_pembayaran"
+                value={formData.tipe_pembayaran}
+                onChange={(e) => setFormData({ ...formData, tipe_pembayaran: e.target.value })}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                required
+              >
+                <option value="cash">Cash</option>
+                <option value="transfer">Transfer</option>
+                <option value="debet">Debet</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="jumlah_pembayaran">Jumlah Pembayaran (Rp)</Label>
+              <Input
+                id="jumlah_pembayaran"
+                type="text"
+                value={formatNumber(formData.jumlah_pembayaran)}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "");
+                  setFormData({ ...formData, jumlah_pembayaran: raw });
+                }}
+                placeholder="0"
+                required
+              />
             </div>
           </CardContent>
         </Card>

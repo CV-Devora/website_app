@@ -25,7 +25,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, Loader2, Search, FileDown } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, Search, FileDown, Eye, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,13 +42,31 @@ interface Penjualan {
   no_faktur: string;
   nama: string;
   total_harga: number;
-  kode_sales: string;
+  kode_sales: number | null;
+  harga_gram: number;
+  harga_jual: number;
+  ongkos: number;
+  cash: number;
+  transfer: number;
+  debet: number;
+  created_at: string;
+  barang?: { nama: string; berat: number } | null;
 }
 
 interface User {
   id: string;
   nama: string;
   role: string;
+  kode_sales?: number | null;
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-1 border-b pb-3 last:border-0">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium">{value}</span>
+    </div>
+  );
 }
 
 export default function PenjualanPage() {
@@ -58,12 +76,19 @@ export default function PenjualanPage() {
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [detailItem, setDetailItem] = useState<Penjualan | null>(null);
 
   const [formData, setFormData] = useState({
     no_faktur: "",
     nama: "",
     total_harga: "",
     kode_sales: "",
+    harga_gram: "",
+    harga_jual: "",
+    ongkos: "",
+    cash: "",
+    transfer: "",
+    debet: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [page, setPage] = useState(1);
@@ -153,7 +178,13 @@ export default function PenjualanPage() {
         no_faktur: penjualan.no_faktur,
         nama: penjualan.nama,
         total_harga: penjualan.total_harga.toString(),
-        kode_sales: penjualan.kode_sales,
+        kode_sales: penjualan.kode_sales?.toString() ?? "",
+        harga_gram: penjualan.harga_gram?.toString() ?? "0",
+        harga_jual: penjualan.harga_jual?.toString() ?? "0",
+        ongkos: penjualan.ongkos?.toString() ?? "0",
+        cash: penjualan.cash?.toString() ?? "0",
+        transfer: penjualan.transfer?.toString() ?? "0",
+        debet: penjualan.debet?.toString() ?? "0",
       });
     } else {
       setEditingId(null);
@@ -162,9 +193,23 @@ export default function PenjualanPage() {
         nama: "",
         total_harga: "",
         kode_sales: "",
+        harga_gram: "",
+        harga_jual: "",
+        ongkos: "",
+        cash: "",
+        transfer: "",
+        debet: "",
       });
     }
     setSheetOpen(true);
+  };
+
+  const handleOpenDetail = (penjualan: Penjualan) => {
+    setDetailItem(penjualan);
+  };
+
+  const handleCloseDetail = () => {
+    setDetailItem(null);
   };
 
   const handleCloseSheet = () => {
@@ -178,11 +223,18 @@ export default function PenjualanPage() {
 
     setSubmitting(true);
     try {
+      const num = (v: string) => parseInt(v.replace(/\D/g, "") || "0", 10);
       const payload = {
         no_faktur: formData.no_faktur,
         nama: formData.nama,
-        total_harga: parseInt(formData.total_harga.replace(/\D/g, ""), 10),
-        kode_sales: formData.kode_sales,
+        total_harga: num(formData.total_harga),
+        kode_sales: formData.kode_sales ? parseInt(formData.kode_sales, 10) : null,
+        harga_gram: num(formData.harga_gram),
+        harga_jual: num(formData.harga_jual),
+        ongkos: num(formData.ongkos),
+        cash: num(formData.cash),
+        transfer: num(formData.transfer),
+        debet: num(formData.debet),
       };
 
       if (editingId) {
@@ -230,8 +282,19 @@ export default function PenjualanPage() {
     }).format(number);
   };
 
+  const formatTime = (value: string) => {
+    if (!value) return "-";
+    return value.slice(11, 16);
+  };
+
   const filteredData = useMemo(
-    () => penjualans.filter((p) => p.no_faktur.toLowerCase().includes(search.toLowerCase()) || p.nama.toLowerCase().includes(search.toLowerCase())),
+    () =>
+      penjualans.filter(
+        (p) =>
+          p.no_faktur.toLowerCase().includes(search.toLowerCase()) ||
+          p.nama.toLowerCase().includes(search.toLowerCase()) ||
+          (p.barang?.nama ?? "").toLowerCase().includes(search.toLowerCase())
+      ),
     [penjualans, search]
   );
   const totalPages = Math.ceil(filteredData.length / perPage);
@@ -239,11 +302,6 @@ export default function PenjualanPage() {
     () => filteredData.slice((page - 1) * perPage, page * perPage),
     [filteredData, page, perPage]
   );
-
-  const getSalesName = (kodeSales: string) => {
-    const user = users.find((u) => u.id === kodeSales);
-    return user ? user.nama : kodeSales;
-  };
 
   const salesUsers = users.filter((u) => u.role === "sales");
 
@@ -329,7 +387,7 @@ export default function PenjualanPage() {
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Cari no. faktur atau nama pelanggan..."
+                placeholder="Cari no. faktur, nama pelanggan, atau nama barang..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -339,29 +397,49 @@ export default function PenjualanPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Jam</TableHead>
                     <TableHead>No. Faktur</TableHead>
                     <TableHead>Nama Pelanggan</TableHead>
+                    <TableHead>Nama Barang</TableHead>
                     <TableHead>Total Nilai</TableHead>
-                    <TableHead>Nama Sales</TableHead>
-                    {showAksi && <TableHead className="w-[100px] text-center">Tindakan</TableHead>}
+                    <TableHead>Cash</TableHead>
+                    <TableHead>Transfer</TableHead>
+                    <TableHead>Debet</TableHead>
+                    <TableHead>Kode Sales</TableHead>
+                    {showAksi && <TableHead className="w-[140px] text-center">Tindakan</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={showAksi ? 5 : 4} className="h-24 text-center">
+                      <TableCell colSpan={showAksi ? 10 : 9} className="h-24 text-center">
                         Belum ada data transaksi penjualan.
                       </TableCell>
                     </TableRow>
                   ) : (
                     paginatedData.map((item) => (
                       <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.no_faktur}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {formatTime(item.created_at)}
+                        </TableCell>
+                        <TableCell>{item.no_faktur}</TableCell>
                         <TableCell>{item.nama}</TableCell>
+                        <TableCell>{item.barang?.nama ?? "-"}</TableCell>
                         <TableCell>{formatRupiah(item.total_harga)}</TableCell>
-                        <TableCell>{getSalesName(item.kode_sales)}</TableCell>
+                        <TableCell>{formatRupiah(item.cash ?? 0)}</TableCell>
+                        <TableCell>{formatRupiah(item.transfer ?? 0)}</TableCell>
+                        <TableCell>{formatRupiah(item.debet ?? 0)}</TableCell>
+                        <TableCell>{item.kode_sales ?? "-"}</TableCell>
                         {showAksi && (
                           <TableCell className="text-center space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenDetail(item)}
+                              title="Detail"
+                            >
+                              <Eye className="size-4 text-slate-600" />
+                            </Button>
                             {isSales && (
                               <Button
                                 variant="ghost"
@@ -445,7 +523,85 @@ export default function PenjualanPage() {
             </div>
 
             <div className="flex flex-col gap-3">
-              <Label htmlFor="kode_sales">Nama Sales</Label>
+              <Label htmlFor="harga_gram">Harga Gram (Rp)</Label>
+              <Input
+                id="harga_gram"
+                type="text"
+                value={formData.harga_gram}
+                onChange={(e) =>
+                  setFormData({ ...formData, harga_gram: e.target.value.replace(/\D/g, "") })
+                }
+                placeholder="Contoh: 750000"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="harga_jual">Harga Jual (Rp)</Label>
+              <Input
+                id="harga_jual"
+                type="text"
+                value={formData.harga_jual}
+                onChange={(e) =>
+                  setFormData({ ...formData, harga_jual: e.target.value.replace(/\D/g, "") })
+                }
+                placeholder="Contoh: 4500000"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="ongkos">Ongkos (Rp)</Label>
+              <Input
+                id="ongkos"
+                type="text"
+                value={formData.ongkos}
+                onChange={(e) =>
+                  setFormData({ ...formData, ongkos: e.target.value.replace(/\D/g, "") })
+                }
+                placeholder="Contoh: 100000"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="cash">Cash (Rp)</Label>
+              <Input
+                id="cash"
+                type="text"
+                value={formData.cash}
+                onChange={(e) =>
+                  setFormData({ ...formData, cash: e.target.value.replace(/\D/g, "") })
+                }
+                placeholder="Contoh: 2000000"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="transfer">Transfer (Rp)</Label>
+              <Input
+                id="transfer"
+                type="text"
+                value={formData.transfer}
+                onChange={(e) =>
+                  setFormData({ ...formData, transfer: e.target.value.replace(/\D/g, "") })
+                }
+                placeholder="Contoh: 2000000"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="debet">Debet (Rp)</Label>
+              <Input
+                id="debet"
+                type="text"
+                value={formData.debet}
+                onChange={(e) =>
+                  setFormData({ ...formData, debet: e.target.value.replace(/\D/g, "") })
+                }
+                placeholder="Contoh: 600000"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="kode_sales">Kode Sales</Label>
               <select
                 id="kode_sales"
                 value={formData.kode_sales}
@@ -453,10 +609,10 @@ export default function PenjualanPage() {
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 required
               >
-                <option value="" disabled>Pilih nama sales</option>
+                <option value="" disabled>Pilih kode sales</option>
                 {salesUsers.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.nama}
+                  <option key={u.id} value={u.kode_sales?.toString() ?? ""}>
+                    {u.kode_sales != null ? `K${u.kode_sales} - ${u.nama}` : u.nama}
                   </option>
                 ))}
               </select>
@@ -476,6 +632,54 @@ export default function PenjualanPage() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={!!detailItem} onOpenChange={(open) => !open && handleCloseDetail()}>
+        <AlertDialogContent
+          className="w-[42rem]"
+          style={{ maxWidth: "min(42rem, calc(100vw - 2rem))" }}
+        >
+          <AlertDialogCancel
+            onClick={handleCloseDetail}
+            variant="ghost"
+            size="icon"
+            className="absolute right-3 top-3 z-10 rounded-md p-1"
+            title="Tutup"
+          >
+            <X className="size-5" />
+          </AlertDialogCancel>
+
+          <AlertDialogHeader>
+            <AlertDialogTitle>Detail Transaksi Penjualan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informasi lengkap transaksi penjualan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {detailItem && (
+            <div className="grid grid-cols-2 gap-x-12 gap-y-3 py-2">
+              <DetailRow label="Jam" value={formatTime(detailItem.created_at)} />
+              <DetailRow label="No. Faktur" value={detailItem.no_faktur} />
+              <DetailRow label="Nama Pelanggan" value={detailItem.nama} />
+              <DetailRow label="Nama Barang" value={detailItem.barang?.nama ?? "-"} />
+              <DetailRow
+                label="Berat (gr)"
+                value={detailItem.barang?.berat != null ? `${detailItem.barang.berat} gr` : "-"}
+              />
+              <DetailRow label="Debet" value={formatRupiah(detailItem.debet ?? 0)} />
+              <DetailRow label="Harga Gram" value={formatRupiah(detailItem.harga_gram ?? 0)} />
+              <DetailRow label="Cash" value={formatRupiah(detailItem.cash ?? 0)} />
+              <DetailRow label="Harga Jual" value={formatRupiah(detailItem.harga_jual ?? 0)} />
+              <DetailRow label="Transfer" value={formatRupiah(detailItem.transfer ?? 0)} />
+              <DetailRow label="Ongkos" value={formatRupiah(detailItem.ongkos ?? 0)} />
+              <DetailRow label="Total Nilai" value={formatRupiah(detailItem.total_harga)} />
+              <DetailRow
+                label="Kode Sales"
+                value={detailItem.kode_sales != null ? String(detailItem.kode_sales) : "-"}
+              />
+            </div>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>

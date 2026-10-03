@@ -41,6 +41,7 @@ interface User {
   nama: string;
   username: string;
   role: string;
+  kode_sales?: number | null;
 }
 
 export default function UsersPage() {
@@ -49,7 +50,13 @@ export default function UsersPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({ nama: "", username: "", password: "", role: "sales" });
+  const [formData, setFormData] = useState({
+    nama: "",
+    username: "",
+    password: "",
+    role: "sales",
+    kode_sales: "",
+  });
   const [submitting, setSubmitting] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -79,10 +86,16 @@ export default function UsersPage() {
   const handleOpenSheet = (user?: User) => {
     if (user) {
       setEditingId(user.id);
-      setFormData({ nama: user.nama, username: user.username, password: "", role: user.role });
+      setFormData({
+        nama: user.nama,
+        username: user.username,
+        password: "",
+        role: user.role,
+        kode_sales: user.kode_sales != null ? user.kode_sales.toString() : "",
+      });
     } else {
       setEditingId(null);
-      setFormData({ nama: "", username: "", password: "", role: "sales" });
+      setFormData({ nama: "", username: "", password: "", role: "sales", kode_sales: "" });
     }
     setSheetOpen(true);
   };
@@ -90,7 +103,7 @@ export default function UsersPage() {
   const handleCloseSheet = () => {
     setSheetOpen(false);
     setEditingId(null);
-    setFormData({ nama: "", username: "", password: "", role: "sales" });
+    setFormData({ nama: "", username: "", password: "", role: "sales", kode_sales: "" });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,6 +116,7 @@ export default function UsersPage() {
         nama: formData.nama,
         username: formData.username,
         role: formData.role,
+        kode_sales: formData.kode_sales ? parseInt(formData.kode_sales, 10) : null,
       };
 
       if (editingId) {
@@ -199,6 +213,7 @@ export default function UsersPage() {
                   <TableRow>
                     <TableHead>Nama Lengkap</TableHead>
                     <TableHead>Username</TableHead>
+                    <TableHead>Kode Sales</TableHead>
                     <TableHead>Peran</TableHead>
                     <TableHead className="w-[100px] text-right">Tindakan</TableHead>
                   </TableRow>
@@ -206,7 +221,7 @@ export default function UsersPage() {
                 <TableBody>
                   {filteredData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center">
+                      <TableCell colSpan={5} className="h-24 text-center">
                         Tidak ada data pengguna yang terdaftar.
                       </TableCell>
                     </TableRow>
@@ -215,6 +230,7 @@ export default function UsersPage() {
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.nama}</TableCell>
                         <TableCell>{user.username}</TableCell>
+                        <TableCell>{user.kode_sales != null ? `K${user.kode_sales}` : "-"}</TableCell>
                         <TableCell className="capitalize">{user.role}</TableCell>
                         <TableCell className="text-right space-x-2">
                           <Button
@@ -292,6 +308,19 @@ export default function UsersPage() {
                 />
               </div>
             )}
+
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="kode_sales">Kode Sales</Label>
+              <Input
+                id="kode_sales"
+                type="text"
+                value={formData.kode_sales}
+                onChange={(e) =>
+                  setFormData({ ...formData, kode_sales: e.target.value.replace(/\D/g, "") })
+                }
+                placeholder="Contoh: 1"
+              />
+            </div>
 
             <div className="flex flex-col gap-3">
               <Label htmlFor="role">Peran Pengguna</Label>

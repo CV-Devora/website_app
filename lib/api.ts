@@ -174,6 +174,16 @@ export const api = {
     delete: (id: string) =>
       apiFetch<{ code: number }>(`/baki/${id}`, { method: "DELETE" }),
   },
+  barangLanding: {
+    list: () => apiFetch<{ code: number; data: unknown[] }>("/barang-landing"),
+    get: (id: string) => apiFetch<{ code: number; data: unknown }>(`/barang-landing/${id}`),
+    create: (body: unknown) =>
+      apiFetch<{ code: number; data: unknown }>("/barang-landing", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: string, body: unknown) =>
+      apiFetch<{ code: number; data: unknown }>(`/barang-landing/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+    delete: (id: string) =>
+      apiFetch<{ code: number }>(`/barang-landing/${id}`, { method: "DELETE" }),
+  },
   users: {
     list: () => apiFetch<{ code: number; data: unknown[] }>("/users"),
     create: (body: unknown) =>

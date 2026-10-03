@@ -7,21 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Combobox } from "@base-ui/react/combobox";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Search } from "lucide-react";
+import { Loader2, ArrowLeft, Check, ChevronsUpDown } from "lucide-react";
 
 interface User {
   id: string;
   nama: string;
   role: string;
+  kode_sales?: number | null;
 }
 
 interface Barang {
@@ -34,72 +28,96 @@ interface Barang {
   kondisi: string;
 }
 
+interface BarangItem {
+  value: string;
+  label: string;
+  berat: number;
+}
+
 export default function TambahPenjualanPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [barangList, setBarangList] = useState<Barang[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [search, setSearch] = useState("");
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser] = useState<User | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as User;
+    } catch {
+      return null;
+    }
+  });
+  const [selectedBarang, setSelectedBarang] = useState<BarangItem | null>(null);
 
   const [formData, setFormData] = useState({
     no_faktur: "",
     nama: "",
-    kode_sales: "",
+    harga_jual: "",
+    ongkos: "",
+    total_harga: "",
+    cash: "",
+    transfer: "",
+    debet: "",
   });
-
-  useEffect(() => {
-    const raw = localStorage.getItem("user");
-    if (raw) {
-      try {
-        const user = JSON.parse(raw) as User;
-        setCurrentUser(user);
-        setFormData((prev) => ({ ...prev, kode_sales: user.id }));
-      } catch {}
-    }
-    fetchBarang();
-  }, []);
 
   const fetchBarang = async () => {
     try {
       const resBarang = await api.barang.list();
       setBarangList(resBarang.data as Barang[]);
     } catch (error) {
-      console.error("Gagal memuat data:", error);
+      console.error("Gagal memuat data barang:", error);
     }
   };
 
-  const toggleBarang = (id: string) => {
-    const next = new Set(selectedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelectedIds(next);
-  };
+  useEffect(() => {
+    fetchBarang();
+  }, []);
 
-  const totalHarga = barangList
-    .filter((b) => selectedIds.has(b.id))
-    .reduce((sum, b) => sum + b.harga, 0);
-
-  const filteredBarang = barangList.filter((b) =>
-    b.nama.toLowerCase().includes(search.toLowerCase()) ||
-    b.barcode.toLowerCase().includes(search.toLowerCase())
-  );
+  const barangItems: BarangItem[] = barangList.map((b) => ({
+    value: b.id,
+    label: b.nama,
+    berat: b.berat,
+  }));
 
   const handleSubmit = async () => {
-    if (!formData.no_faktur || !formData.nama || !formData.kode_sales) return;
-    if (selectedIds.size === 0) {
-      toast.warning("Pilih minimal satu barang.");
+    if (
+      !formData.no_faktur ||
+      !formData.nama ||
+      !selectedBarang ||
+      !currentUser
+    )
+      return;
+
+    const num = (v: string) => parseInt(v.replace(/\D/g, "") || "0", 10);
+    const paymentTotal = num(formData.cash) + num(formData.transfer) + num(formData.debet);
+
+    if (paymentTotal !== num(formData.total_harga)) {
+      toast.warning("Jumlah Cash + Transfer + Debet harus sama dengan Total Nilai.");
       return;
     }
+
+    if (selectedBarang.berat <= 0) {
+      toast.warning("Berat barang tidak valid.");
+      return;
+    }
+
+    const hargaGram = Math.round(num(formData.harga_jual) / selectedBarang.berat);
 
     setSubmitting(true);
     try {
       const payload = {
         no_faktur: formData.no_faktur,
         nama: formData.nama,
-        total_harga: totalHarga,
-        kode_sales: formData.kode_sales,
-        barang_ids: Array.from(selectedIds),
+        total_harga: num(formData.total_harga),
+        kode_sales: currentUser.kode_sales ?? null,
+        harga_gram: hargaGram,
+        harga_jual: num(formData.harga_jual),
+        ongkos: num(formData.ongkos),
+        cash: num(formData.cash),
+        transfer: num(formData.transfer),
+        debet: num(formData.debet),
+        barang_ids: [selectedBarang.value],
       };
 
       await api.penjualan.create(payload);
@@ -111,6 +129,9 @@ export default function TambahPenjualanPage() {
       setSubmitting(false);
     }
   };
+
+  const setField = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setFormData((prev) => ({ ...prev, [key]: e.target.value.replace(/\D/g, "") }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -124,7 +145,7 @@ export default function TambahPenjualanPage() {
               Tambah Penjualan
             </h1>
             <p className="text-sm text-muted-foreground">
-              Pilih barang yang akan dijual dan lengkapi data penjualan.
+              Isi seluruh data penjualan secara manual.
             </p>
           </div>
         </div>
@@ -165,87 +186,142 @@ export default function TambahPenjualanPage() {
                 required
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Barang</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col gap-3">
-              <Label>Jumlah Harga</Label>
-              <div className="flex h-8 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm font-semibold">
-                {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(totalHarga)}
-              </div>
+              <Label>Nama Barang</Label>
+              <Combobox.Root
+                items={barangItems}
+                value={selectedBarang}
+                onValueChange={(value) => setSelectedBarang(value)}
+                autoHighlight
+              >
+                <div className="relative">
+                  <Combobox.Input
+                    className="flex h-10 w-full items-center rounded-md border border-input px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    placeholder="Cari barang..."
+                    required
+                  />
+                  <div className="absolute right-0 top-0 flex h-full items-center pr-2 text-muted-foreground pointer-events-none">
+                    <ChevronsUpDown className="size-4" />
+                  </div>
+                </div>
+                <Combobox.Portal>
+                  <Combobox.Positioner className="outline-none" sideOffset={4}>
+                    <Combobox.Popup className="z-50 w-[var(--anchor-width)] max-w-[var(--available-width)] rounded-md border bg-popover text-popover-foreground shadow-md data-starting-style:scale-95 data-starting-style:opacity-0 data-starting-style:duration-100 data-starting-style:ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:duration-100 data-ending-style:ease-in">
+                      <Combobox.Empty>
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          Barang tidak ditemukan.
+                        </div>
+                      </Combobox.Empty>
+                      <Combobox.List className="max-h-72 overflow-y-auto overscroll-contain p-1 outline-none">
+                        {(item: BarangItem) => (
+                          <Combobox.Item
+                            key={item.value}
+                            value={item}
+                            className="flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                          >
+                            <span className="flex-1">{item.label}</span>
+                            <Combobox.ItemIndicator className="data-selected:inline-flex hidden items-center">
+                              <Check className="size-4" />
+                            </Combobox.ItemIndicator>
+                          </Combobox.Item>
+                        )}
+                      </Combobox.List>
+                    </Combobox.Popup>
+                  </Combobox.Positioner>
+                </Combobox.Portal>
+              </Combobox.Root>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="berat">Berat (gr)</Label>
+              <Input
+                id="berat"
+                value={selectedBarang ? `${selectedBarang.berat} gr` : ""}
+                placeholder="Pilih barang terlebih dahulu"
+                disabled
+                className="bg-muted"
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="harga_jual">Harga Jual (Rp)</Label>
+              <Input
+                id="harga_jual"
+                type="text"
+                value={formData.harga_jual}
+                onChange={setField("harga_jual")}
+                placeholder="Contoh: 4500000"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="ongkos">Ongkos (Rp)</Label>
+              <Input
+                id="ongkos"
+                type="text"
+                value={formData.ongkos}
+                onChange={setField("ongkos")}
+                placeholder="Contoh: 100000"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="total_harga">Total Nilai (Rp)</Label>
+              <Input
+                id="total_harga"
+                type="text"
+                value={formData.total_harga}
+                onChange={setField("total_harga")}
+                placeholder="Contoh: 4600000"
+                required
+              />
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Pilih Barang</CardTitle>
+            <CardTitle>Metode Pembayaran</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="cash">Cash (Rp)</Label>
               <Input
-                className="pl-9"
-                placeholder="Cari barang..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                id="cash"
+                type="text"
+                value={formData.cash}
+                onChange={setField("cash")}
+                placeholder="Contoh: 2000000"
+                required
               />
             </div>
-
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10"></TableHead>
-                    <TableHead>Barcode</TableHead>
-                    <TableHead>Nama Barang</TableHead>
-                    <TableHead>Kadar</TableHead>
-                    <TableHead>Berat (gr)</TableHead>
-                    <TableHead>Harga</TableHead>
-                    <TableHead>Kondisi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredBarang.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                        Tidak ada barang tersedia.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredBarang.map((b) => (
-                      <TableRow
-                        key={b.id}
-                        className="cursor-pointer"
-                        onClick={() => toggleBarang(b.id)}
-                      >
-                        <TableCell>
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(b.id)}
-                            onChange={() => toggleBarang(b.id)}
-                            className="size-4"
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium text-xs">{b.barcode}</TableCell>
-                        <TableCell className="font-medium">{b.nama}</TableCell>
-                        <TableCell>{b.karat?.name ?? "-"}</TableCell>
-                        <TableCell>{b.berat}</TableCell>
-                        <TableCell>
-                          {new Intl.NumberFormat("id-batID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(b.harga)}
-                        </TableCell>
-                        <TableCell className="capitalize">{b.kondisi}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="transfer">Transfer (Rp)</Label>
+              <Input
+                id="transfer"
+                type="text"
+                value={formData.transfer}
+                onChange={setField("transfer")}
+                placeholder="Contoh: 2000000"
+                required
+              />
             </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {selectedIds.size} barang dipilih
-              </span>
-              <span className="font-semibold">
-                Total: {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(totalHarga)}
-              </span>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="debet">Debet (Rp)</Label>
+              <Input
+                id="debet"
+                type="text"
+                value={formData.debet}
+                onChange={setField("debet")}
+                placeholder="Contoh: 600000"
+                required
+              />
             </div>
           </CardContent>
         </Card>

@@ -19,9 +19,9 @@ export default function LandingPage() {
   const [featured, setFeatured] = useState<BarangCardData[]>([]);
 
   useEffect(() => {
-    api.barang
+    api.barangLanding
       .list()
-      .then((res) => setFeatured((res.data as BarangCardData[]).slice(0, 4)))
+      .then((res) => setFeatured(res.data as BarangCardData[]))
       .catch((err) => console.error("Failed to fetch featured barang:", err));
   }, []);
 

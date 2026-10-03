@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
   { label: "Penjualan", href: "/penjualan", icon: ShoppingBag, group: "Transaksi", allowedRoles: ["admin", "kasir", "sales"] },
   { label: "Karat", href: "/karat", icon: Star, group: "Master", allowedRoles: ["admin", "sales"] },
   { label: "Pengguna", href: "/users", icon: Users, group: "Master", allowedRoles: ["admin"] },
-  { label: "Pengaturan", href: "/dashboard/settings", icon: Settings, group: "Sistem", allowedRoles: ["admin"] },
+  { label: "Pengaturan", href: "/settings", icon: Settings, group: "Sistem", allowedRoles: ["admin"] },
 ];
 
 export function NavLinks({ collapsed }: { collapsed?: boolean }) {

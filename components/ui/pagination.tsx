@@ -130,7 +130,7 @@ interface PaginationProps {
 }
 
 function Pagination({ currentPage, totalPages, onPageChange, perPage, onPerPageChange }: PaginationProps) {
-  if (totalPages <= 1 && perPage >= 10) return null
+  const showNav = totalPages > 1
 
   const getPageNumbers = () => {
     const pages: (number | "ellipsis")[] = []
@@ -164,6 +164,7 @@ function Pagination({ currentPage, totalPages, onPageChange, perPage, onPerPageC
           ))}
         </select>
       </div>
+      {showNav && (
       <PaginationNav>
         <PaginationContent>
           <PaginationItem>
@@ -198,6 +199,7 @@ function Pagination({ currentPage, totalPages, onPageChange, perPage, onPerPageC
           </PaginationItem>
         </PaginationContent>
       </PaginationNav>
+      )}
     </div>
   )
 }
