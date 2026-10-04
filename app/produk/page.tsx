@@ -7,16 +7,7 @@ import { Topbar } from "@/features/storefront/components/topbar";
 import { StorefrontHeader } from "@/features/storefront/components/storefront-header";
 import { FooterFull } from "@/features/storefront/components/footer-full";
 import { ProductCard, type BarangCardData } from "@/features/storefront/components/product-card";
-import { Loader2, Gem, SlidersHorizontal } from "lucide-react";
-
-const filters = [
-  { label: "Semua", value: "all" },
-  { label: "24K", value: "24" },
-  { label: "22K", value: "22" },
-  { label: "18K", value: "18" },
-  { label: "Baru", value: "baru" },
-  { label: "Bekas", value: "bekas" },
-];
+import { Loader2, Gem, Search, SlidersHorizontal, X } from "lucide-react";
 
 export default function ProdukPage() {
   const searchParams = useSearchParams();
@@ -25,6 +16,7 @@ export default function ProdukPage() {
   const [barangs, setBarangs] = useState<BarangCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState(initialKarat ?? "all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     api.barang
@@ -35,95 +27,134 @@ export default function ProdukPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    if (activeFilter === "all") return barangs;
-    if (activeFilter === "baru" || activeFilter === "bekas") {
-      return barangs.filter((b) => b.kondisi === activeFilter);
+    let result = barangs;
+
+    // Apply filter
+    if (activeFilter !== "all") {
+      if (activeFilter === "baru" || activeFilter === "bekas") {
+        result = result.filter((b) => b.kondisi === activeFilter);
+      } else {
+        result = result.filter((b) => {
+          const k = typeof b.karat === "object" && b.karat ? (b.karat as any).name : b.karat;
+          return parseInt(k, 10) === parseInt(activeFilter, 10);
+        });
+      }
     }
-    return barangs.filter((b) => {
-      const k = typeof b.karat === "object" && b.karat ? (b.karat as any).name : b.karat;
-      return parseInt(k, 10) === parseInt(activeFilter, 10);
-    });
-  }, [barangs, activeFilter]);
+
+    // Apply search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((b) => b.nama.toLowerCase().includes(q));
+    }
+
+    return result;
+  }, [barangs, activeFilter, searchQuery]);
 
   return (
     <div className="theme-storefront min-h-screen bg-background text-foreground flex flex-col">
-      <Topbar />
       <StorefrontHeader />
 
-      {/* Page hero header */}
+      {/* Page hero */}
       <section className="relative overflow-hidden border-b border-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-muted via-background to-accent" />
-        <div className="absolute inset-0 opacity-[0.02]" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-          backgroundSize: '24px 24px',
-        }} />
-        <div className="relative mx-auto max-w-6xl px-6 py-14">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-muted/60 via-background to-background" />
+        <div
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
+            backgroundSize: "24px 24px",
+          }}
+        />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
+
+        <div className="relative mx-auto max-w-7xl px-6 py-16 sm:py-20">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex size-10 items-center justify-center rounded-full bg-gold/10">
-              <Gem className="size-5 text-gold" />
-            </div>
-            <div className="h-px flex-1 bg-gradient-to-r from-gold/20 to-transparent" />
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-gold/60" />
+            <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-gold">
+              Katalog Lengkap
+            </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-semibold text-foreground">
-            Katalog Produk
+          <h1 className="text-4xl sm:text-5xl font-semibold text-foreground leading-tight">
+            Koleksi Perhiasan
           </h1>
-          <p className="text-muted-foreground mt-2 max-w-md leading-relaxed">
-            Semua perhiasan tersedia, lengkap dengan karat dan berat.
+          <p className="text-muted-foreground mt-3 max-w-lg leading-relaxed">
+            Semua perhiasan tersedia, lengkap dengan karat, berat, dan kondisi yang terverifikasi.
           </p>
         </div>
       </section>
 
-      {/* Filters + Grid */}
-      <section className="mx-auto max-w-6xl px-6 py-10 flex-1 w-full">
-        <div className="flex items-center gap-3 mb-6">
-          <SlidersHorizontal className="size-4 text-muted-foreground" />
-          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Filter</span>
-        </div>
-
-        <div className="flex flex-wrap gap-2 mb-8">
-          {filters.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => setActiveFilter(f.value)}
-              className={`rounded-full px-5 py-2 text-sm font-medium border transition-all duration-200 ${
-                activeFilter === f.value
-                  ? "bg-gradient-to-r from-gold-dark via-gold to-gold-light border-gold/30 text-white shadow-sm"
-                  : "border-border text-muted-foreground hover:border-gold/40 hover:text-gold"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+      {/* Main content */}
+      <section className="flex-1 mx-auto max-w-7xl w-full px-6 py-10">
+        {/* Search + Filter bar */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          {/* Search input */}
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari produk..."
+              className="w-full h-10 pl-10 pr-9 rounded-xl border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/40 focus:ring-1 focus:ring-gold/20 transition-all duration-200"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Results count */}
         {!loading && (
-          <p className="text-sm text-muted-foreground mb-6">
-            Menampilkan <span className="font-medium text-foreground">{filtered.length}</span> produk
-          </p>
+          <div className="flex items-center gap-2 mb-8">
+            <div className="h-px flex-1 bg-border" />
+            <p className="text-xs text-muted-foreground shrink-0 font-mono">
+              {filtered.length} produk ditemukan
+              {(activeFilter !== "all" || searchQuery) && (
+                <button
+                  onClick={() => { setActiveFilter("all"); setSearchQuery(""); }}
+                  className="ml-2 text-gold hover:text-gold-dark transition-colors"
+                >
+                  · Reset filter
+                </button>
+              )}
+            </p>
+            <div className="h-px flex-1 bg-border" />
+          </div>
         )}
 
-        <div>
-          {loading ? (
-            <div className="flex flex-col items-center justify-center p-16 gap-3">
-              <Loader2 className="size-8 animate-spin text-gold/50" />
-              <p className="text-sm text-muted-foreground">Memuat produk...</p>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-16">
-              <Gem className="size-12 text-gold/20 mx-auto mb-4" strokeWidth={1} />
-              <p className="text-muted-foreground">
-                Tidak ada produk yang cocok dengan filter ini.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-              {filtered.map((barang) => (
-                <ProductCard key={barang.id} barang={barang} />
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Grid */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-32 gap-3">
+            <Loader2 className="size-8 animate-spin text-gold/50" />
+            <p className="text-sm text-muted-foreground">Memuat produk...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-32">
+            <Gem className="size-14 text-gold/15 mx-auto mb-5" strokeWidth={1} />
+            <p className="text-foreground font-medium mb-2">Tidak ada produk ditemukan</p>
+            <p className="text-sm text-muted-foreground mb-5">
+              Coba ubah filter atau kata kunci pencarian Anda.
+            </p>
+            <button
+              onClick={() => { setActiveFilter("all"); setSearchQuery(""); }}
+              className="inline-flex items-center gap-2 rounded-full border border-gold/30 px-5 py-2 text-sm text-gold hover:bg-gold/5 transition-all duration-200"
+            >
+              <X className="size-3.5" />
+              Reset semua filter
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+            {filtered.map((barang) => (
+              <ProductCard key={barang.id} barang={barang} />
+            ))}
+          </div>
+        )}
       </section>
 
       <FooterFull />

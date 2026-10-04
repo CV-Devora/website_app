@@ -58,25 +58,9 @@ export default function ProdukDetailPage() {
 
   return (
     <div className="theme-storefront min-h-screen bg-background text-foreground flex flex-col">
-      <Topbar />
       <StorefrontHeader />
 
       <section className="mx-auto max-w-5xl px-6 py-10 flex-1 w-full">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm mb-8">
-          <Link href="/" className="text-muted-foreground hover:text-gold transition-colors">
-            Beranda
-          </Link>
-          <span className="text-muted-foreground/40">/</span>
-          <Link href="/produk" className="text-muted-foreground hover:text-gold transition-colors">
-            Katalog
-          </Link>
-          <span className="text-muted-foreground/40">/</span>
-          <span className="text-foreground font-medium truncate max-w-[200px]">
-            {barang?.nama ?? "Detail"}
-          </span>
-        </div>
-
         {loading ? (
           <div className="flex flex-col items-center justify-center p-20 gap-3">
             <Loader2 className="size-8 animate-spin text-gold/50" />

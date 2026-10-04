@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Toko Emas – Sistem Manajemen",
+  title: "Jason Jewelry — Perhiasan Emas Terpercaya",
   description:
-    "Platform manajemen penjualan, pembelian, dan inventaris emas terintegrasi.",
-  keywords: ["toko emas", "jewelry", "manajemen", "dashboard"],
+    "Perhiasan emas premium dengan kemurnian terjamin dan tera resmi. Melayani sejak 2014 di Toba, Sumatera Utara.",
+  keywords: ["toko emas", "perhiasan emas", "jewelry", "karat", "Balige", "Toba", "Sumatera Utara"],
 };
 
 export default function RootLayout({

@@ -94,7 +94,7 @@ export default function LoginPage() {
 
           <div className="h-px bg-white/20" />
           <p className="text-xs text-blue-200">
-            © 2025 Jason Jewelry. Semua hak dilindungi.
+            © {new Date().getFullYear()} Jason Jewelry. Semua hak dilindungi.
           </p>
         </div>
       </div>

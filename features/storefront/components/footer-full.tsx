@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Phone, Mail } from "lucide-react";
-import { SiInstagram, SiFacebook } from "@icons-pack/react-simple-icons";
+import { Phone, Mail, MapPin } from "lucide-react";
+import { SiInstagram, SiFacebook, SiWhatsapp } from "@icons-pack/react-simple-icons";
 
 const columns = [
   {
@@ -8,88 +8,100 @@ const columns = [
     links: [
       { label: "Beranda", href: "/" },
       { label: "Produk", href: "/produk" },
-      { label: "Masuk", href: "/login" },
+      { label: "Tentang Kami", href: "/tentang" },
+      { label: "Layanan", href: "/layanan" },
+      { label: "Kontak", href: "/kontak" },
     ],
   },
   {
     title: "Bantuan",
     links: [
-      { label: "Hubungi Kami", href: "#" },
+      { label: "Hubungi Kami", href: "/kontak" },
       { label: "Cara Pemesanan", href: "#" },
       { label: "Kebijakan Toko", href: "#" },
+      { label: "FAQ", href: "#" },
     ],
   },
 ];
 
 export function FooterFull() {
   return (
-    <footer className="border-t border-gold/10 bg-foreground">
-      <div className="mx-auto max-w-6xl px-6 py-16 grid sm:grid-cols-[1.3fr_1fr_1fr] gap-10">
-        <div>
-          <p className="text-xl text-background">
-            <span className="italic">Jason</span>{" "}
-            <span className="font-light">Jewelry</span>
-          </p>
-          <p className="text-sm text-background/50 mt-3 max-w-xs leading-relaxed">
-            Perhiasan emas dengan kemurnian terjamin, dibuat untuk dikenang lintas generasi.
-          </p>
-          <div className="flex items-center gap-3 mt-5">
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex size-9 items-center justify-center rounded-full border border-background/15 text-background/50 hover:text-gold hover:border-gold/40 transition-all duration-200"
-            >
-              <SiInstagram size={16} />
-            </a>
-            <a
-              href="https://facebook.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex size-9 items-center justify-center rounded-full border border-background/15 text-background/50 hover:text-gold hover:border-gold/40 transition-all duration-200"
-            >
-              <SiFacebook size={16} />
-            </a>
-          </div>
-        </div>
+    <footer className="relative border-t border-gold/10 bg-foreground overflow-hidden">
+      {/* Decorative gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-foreground via-foreground to-foreground/95" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
 
-        {columns.map((col) => (
-          <div key={col.title}>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-gold/50 mb-5">
-              {col.title}
+      <div className="relative mx-auto max-w-7xl px-6 pt-16 pb-10">
+        {/* Top section */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 pb-12 border-b border-background/10">
+          {/* Brand column */}
+          <div>
+            <p className="text-xl text-background font-semibold mb-1">
+              <span className="italic text-gold">Jason</span>{" "}
+              <span className="font-light">Jewelry</span>
             </p>
-            <ul className="flex flex-col gap-3">
-              {col.links.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-background/60 hover:text-gold transition-colors duration-200"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
+            <p className="text-sm text-background/40 mb-6 leading-relaxed max-w-xs">
+              Perhiasan emas dengan kemurnian terjamin, dibuat untuk dikenang lintas generasi. Melayani dengan hati sejak 2012.
+            </p>
+
+            {/* Contact info */}
+            <div className="flex flex-col gap-2.5 mb-6">
+              <a href="mailto:hello@jasonjewelry.id" className="flex items-center gap-2.5 text-sm text-background/50 hover:text-gold transition-colors duration-200">
+                <Mail className="size-3.5 shrink-0" />
+                hello@jasonjewelry.id
+              </a>
+              <p className="flex items-start gap-2.5 text-sm text-background/50">
+                <MapPin className="size-3.5 shrink-0 mt-0.5" />
+                Pasar Minggu, Jakarta Selatan 12510
+              </p>
+            </div>
+
+            {/* Social */}
+            <div className="flex items-center gap-2">
+              {[
+                { icon: <SiInstagram size={15} />, href: "https://www.instagram.com/emasjason/", label: "Instagram" },
+                { icon: <SiWhatsapp size={15} />, href: "https://wa.me/+62 821-1253-8703", label: "WhatsApp" },
+              ].map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className="flex size-9 items-center justify-center rounded-full border border-background/10 text-background/40 hover:text-gold hover:border-gold/40 hover:bg-gold/5 transition-all duration-200"
+                >
+                  {social.icon}
+                </a>
               ))}
-            </ul>
+            </div>
           </div>
-        ))}
 
-        <div className="sm:col-span-3 sm:hidden flex flex-col gap-2 text-sm text-background/50">
-          <a href="tel:+628123456789" className="flex items-center gap-2">
-            <Phone className="size-4" /> +62 812-3456-789
-          </a>
-          <a href="mailto:hello@jasonjewelry.id" className="flex items-center gap-2">
-            <Mail className="size-4" /> hello@jasonjewelry.id
-          </a>
+          {/* Link columns */}
+          {columns.map((col) => (
+            <div key={col.title} className="flex flex-col items-center">
+              <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-gold/40 mb-5">
+                {col.title}
+              </p>
+              <ul className="flex flex-col gap-2.5 items-center">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-background/50 hover:text-gold transition-colors duration-200"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-      </div>
 
-      <div className="border-t border-background/10">
-        <div className="mx-auto max-w-6xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="font-mono text-xs text-background/35">
+        {/* Bottom bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-8">
+          <p className="font-mono text-[11px] text-background/25">
             © {new Date().getFullYear()} Jason Jewelry. Seluruh hak cipta dilindungi.
-          </p>
-          <p className="font-mono text-xs text-background/35">
-            Dibuat dengan ketelitian di Toba, Sumatera Utara
           </p>
         </div>
       </div>

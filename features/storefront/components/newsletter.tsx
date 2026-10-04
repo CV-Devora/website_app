@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Mail } from "lucide-react";
 import { toast } from "sonner";
 
 export function Newsletter() {
@@ -13,68 +13,89 @@ export function Newsletter() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    
+
     setTimeout(() => {
       setSubmitted(true);
       toast.success("Berhasil Berlangganan!", {
-        description: "Terima kasih telah mendaftar. Kami akan mengirimkan info eksklusif segera.",
+        description:
+          "Terima kasih telah mendaftar. Kami akan mengirimkan info eksklusif segera.",
         style: {
-          background: "oklch(0.18 0.02 55)", // dark theme
-          color: "oklch(0.95 0.01 75)", 
-          border: "1px solid oklch(0.72 0.14 75 / 0.3)", // gold border
+          background: "oklch(0.18 0.02 55)",
+          color: "oklch(0.95 0.01 75)",
+          border: "1px solid oklch(0.72 0.14 75 / 0.3)",
         },
       });
     }, 500);
   };
 
   return (
-    <section className="relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90" />
-      <div className="absolute inset-0 opacity-[0.02]" style={{
-        backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-        backgroundSize: '24px 24px',
-      }} />
+    <section className="relative py-28 overflow-hidden bg-foreground">
+      {/* Layered bg */}
+      <div
+        className="absolute inset-0 opacity-[0.025]"
+        style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
+          backgroundSize: "24px 24px",
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 80% at 50% 50%, oklch(0.72 0.14 75 / 0.06) 0%, transparent 70%)",
+        }}
+      />
 
-      {/* Decorative */}
-      <div className="absolute top-6 left-6 w-12 h-12 border-t border-l border-gold/20" />
-      <div className="absolute bottom-6 right-6 w-12 h-12 border-b border-r border-gold/20" />
+      {/* Decorative corners */}
+      <div className="absolute top-8 left-8 w-16 h-16 border-t border-l border-gold/15" />
+      <div className="absolute bottom-8 right-8 w-16 h-16 border-b border-r border-gold/15" />
 
-      <div className="relative mx-auto max-w-3xl px-6 py-20 text-center">
-        <div className="flex justify-center mb-5">
-          <div className="flex size-10 items-center justify-center rounded-full bg-gold/15">
-            <Sparkles className="size-5 text-gold" />
+      <div className="relative mx-auto max-w-2xl px-6 text-center">
+        {/* Icon */}
+        <div className="flex justify-center mb-6">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-gold/12 border border-gold/20">
+            <Mail className="size-6 text-gold" />
           </div>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-semibold text-background">
-          Jadi yang pertama tahu koleksi terbaru
+
+        <h2 className="text-2xl sm:text-3xl font-semibold text-background leading-snug">
+          Jadi yang pertama tahu{" "}
+          <span className="italic text-shimmer-gold">koleksi terbaru</span>
         </h2>
-        <p className="text-background/50 mt-3 leading-relaxed">
-          Daftar untuk mendapatkan info promo dan koleksi eksklusif dari Jason Jewelry.
+        <p className="text-background/45 mt-4 leading-relaxed max-w-sm mx-auto">
+          Daftar newsletter untuk mendapatkan info promo, koleksi eksklusif, dan kabar terbaru dari Jason Jewelry.
         </p>
 
         {submitted ? (
-          <p className="text-gold-light font-medium mt-8 text-lg animate-fade-in-up">
-            ✓ Terima kasih! Anda telah terdaftar.
-          </p>
+          <div className="mt-10 inline-flex items-center gap-2.5 bg-gold/10 border border-gold/20 rounded-full px-6 py-3 animate-fade-in-up">
+            <span className="text-gold text-lg">✓</span>
+            <p className="text-gold font-medium">Terima kasih! Anda telah terdaftar.</p>
+          </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mt-8 max-w-md mx-auto">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col sm:flex-row gap-3 mt-10 max-w-md mx-auto"
+          >
             <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Alamat email Anda"
+              placeholder="Masukkan alamat email Anda"
               required
-              className="flex-1 bg-background/10 border-background/20 text-background placeholder:text-background/40 focus:border-gold/50 focus:ring-gold/20"
+              className="flex-1 bg-white/8 border-white/15 text-background placeholder:text-background/30 focus:border-gold/40 focus:ring-gold/20 rounded-xl h-11"
             />
             <Button
               type="submit"
-              className="bg-gradient-to-r from-gold-dark via-gold to-gold-light text-white border-0 hover:opacity-90 transition-opacity rounded-lg px-6"
+              className="bg-gradient-to-r from-gold-dark via-gold to-gold-light text-white border-0 hover:opacity-90 hover:shadow-gold-glow transition-all duration-200 rounded-xl h-11 px-6 font-semibold shrink-0"
             >
-              Daftar
+              Daftar Sekarang
             </Button>
           </form>
         )}
+
+        <p className="text-background/25 text-xs mt-5">
+          Kami menghormati privasi Anda. Tidak ada spam, hanya info berharga.
+        </p>
       </div>
     </section>
   );
