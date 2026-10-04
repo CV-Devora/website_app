@@ -60,7 +60,7 @@ export function GoldDistribution({ data, loading }: GoldDistributionProps) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(v: number) => [v, "unit"]}
+              formatter={(v: any) => [v, "unit"]}
               contentStyle={{
                 background: "white",
                 border: "1px solid oklch(0.9 0.02 240)",

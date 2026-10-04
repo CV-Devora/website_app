@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { Topbar } from "@/features/storefront/components/topbar";
@@ -9,7 +9,7 @@ import { FooterFull } from "@/features/storefront/components/footer-full";
 import { ProductCard, type BarangCardData } from "@/features/storefront/components/product-card";
 import { Loader2, Gem, Search, SlidersHorizontal, X } from "lucide-react";
 
-export default function ProdukPage() {
+function ProdukContent() {
   const searchParams = useSearchParams();
   const initialKarat = searchParams.get("karat");
 
@@ -159,5 +159,24 @@ export default function ProdukPage() {
 
       <FooterFull />
     </div>
+  );
+}
+
+export default function ProdukPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="theme-storefront min-h-screen bg-background text-foreground flex flex-col">
+          <StorefrontHeader />
+          <div className="flex-1 flex flex-col items-center justify-center py-32 gap-3">
+            <Loader2 className="size-8 animate-spin text-gold/50" />
+            <p className="text-sm text-muted-foreground">Memuat produk...</p>
+          </div>
+          <FooterFull />
+        </div>
+      }
+    >
+      <ProdukContent />
+    </Suspense>
   );
 }

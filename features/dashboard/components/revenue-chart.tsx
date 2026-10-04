@@ -77,7 +77,7 @@ export function RevenueChart({ data, loading }: RevenueChartProps) {
               width={72}
             />
             <Tooltip
-              formatter={(v: number) => [formatRupiah(v), "Omzet"]}
+              formatter={(v: any) => [formatRupiah(Number(v ?? 0)), "Omzet"]}
               contentStyle={{
                 background: "white",
                 border: "1px solid oklch(0.9 0.02 240)",
