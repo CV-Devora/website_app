@@ -198,25 +198,25 @@ export default function TambahPembelianPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/pembelian")}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={() => router.push("/pembelian")} className="mr-2 shrink-0">
             <ArrowLeft className="size-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               Tambah Pembelian
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Masukkan data pembelian dan barang baru.
             </p>
           </div>
         </div>
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => router.push("/pembelian")}>
+        <div className="flex justify-end gap-3 w-full sm:w-auto">
+          <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => router.push("/pembelian")}>
             Batal
           </Button>
-          <Button type="submit" disabled={submitting}>
+          <Button type="submit" form="pembelian-form" className="flex-1 sm:flex-none" disabled={submitting}>
             {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
             Simpan Pembelian
           </Button>
@@ -224,11 +224,11 @@ export default function TambahPembelianPage() {
       </div>
 
       <form id="pembelian-form" onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Data Pembelian</CardTitle>
+        <Card className="overflow-hidden min-w-0">
+          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+            <CardTitle className="text-base sm:text-lg">Data Pembelian</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-4 sm:p-6 pt-0">
             <div className="flex flex-col gap-3">
               <Label htmlFor="no_faktur">Nomor Faktur</Label>
               <Input
@@ -344,8 +344,8 @@ export default function TambahPembelianPage() {
               const hargaKadar = selectedKarat ? selectedKarat.harga : 0;
 
               return (
-                <Card key={idx} className="relative overflow-hidden">
-                  <div className="absolute top-3 right-6 z-10">
+                <Card key={idx} className="relative overflow-hidden min-w-0">
+                  <div className="absolute top-3 right-4 sm:right-6 z-10">
                     <Button
                       type="button"
                       variant="ghost"
@@ -357,10 +357,10 @@ export default function TambahPembelianPage() {
                       <Trash2 className="size-4" />
                     </Button>
                   </div>
-                  <CardHeader className="px-6 space-y-2">
-                    <CardTitle className="text-base">Barang #{idx + 1}</CardTitle>
+                  <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3 space-y-2">
+                    <CardTitle className="text-sm sm:text-base">Barang #{idx + 1}</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6 pt-0">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                       <div className="flex flex-col gap-2">
                         <Label>Nama Barang</Label>

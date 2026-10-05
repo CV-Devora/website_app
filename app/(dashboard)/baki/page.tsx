@@ -185,27 +185,27 @@ export default function BakiPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="flex flex-col gap-4 sm:gap-6 w-full min-w-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Manajemen Baki
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             Atur dan kelola baki penyimpanan serta barang di dalamnya.
           </p>
         </div>
-        <Button onClick={() => handleOpenModal()}>
-          <Plus className="mr-2 size-4" />
+        <Button size="sm" className="w-full sm:w-auto justify-center h-9" onClick={() => handleOpenModal()}>
+          <Plus className="mr-1.5 size-4" />
           Tambah Baki Baru
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Baki Penyimpanan</CardTitle>
+      <Card className="overflow-hidden min-w-0">
+        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+          <CardTitle className="text-base sm:text-lg">Daftar Baki Penyimpanan</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {loading ? (
             <div className="flex justify-center p-8">
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -221,7 +221,7 @@ export default function BakiPage() {
                 className="pl-9"
               />
             </div>
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto w-full">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -284,12 +284,12 @@ export default function BakiPage() {
 
       {/* Modal Create / Edit */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleCloseModal}>
-          <div className="bg-background rounded-lg shadow-lg max-w-md w-full mx-4 flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4" onClick={handleCloseModal}>
+          <div className="bg-background rounded-xl shadow-xl max-w-md w-full overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b">
               <div>
-                <h2 className="text-lg font-semibold">{editingId ? "Ubah Data Baki" : "Tambah Baki Baru"}</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="text-base sm:text-lg font-semibold">{editingId ? "Ubah Data Baki" : "Tambah Baki Baru"}</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {editingId ? "Perbarui nama baki di bawah ini." : "Isi formulir berikut untuk menambahkan baki baru."}
                 </p>
               </div>
@@ -298,9 +298,9 @@ export default function BakiPage() {
               </Button>
             </div>
 
-            <form id="baki-form" onSubmit={handleSubmit} className="flex flex-col gap-5 p-6">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="nama">Nama Baki</Label>
+            <form id="baki-form" onSubmit={handleSubmit} className="flex flex-col gap-4 p-4 sm:p-6">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="nama" className="text-xs sm:text-sm">Nama Baki</Label>
                 <Input
                   id="nama"
                   value={formNama}
@@ -311,7 +311,7 @@ export default function BakiPage() {
               </div>
             </form>
 
-            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t">
+            <div className="flex items-center justify-end gap-2 px-4 sm:px-6 py-3.5 border-t bg-muted/20">
               <Button type="button" variant="outline" onClick={handleCloseModal}>
                 Batal
               </Button>
@@ -326,28 +326,28 @@ export default function BakiPage() {
 
       {/* Modal Detail */}
       {detailOpen && selectedBaki && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleCloseDetail}>
-          <div className="bg-background rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4" onClick={handleCloseDetail}>
+          <div className="bg-background rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b">
               <div>
-                <h2 className="text-lg font-semibold">Detail Baki Penyimpanan</h2>
-                <p className="text-sm text-muted-foreground">Informasi lengkap baki beserta daftar barang yang tersimpan.</p>
+                <h2 className="text-base sm:text-lg font-semibold">Detail Baki Penyimpanan</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">Informasi lengkap baki beserta daftar barang yang tersimpan.</p>
               </div>
               <Button variant="ghost" size="icon" onClick={handleCloseDetail}>
                 <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </Button>
             </div>
 
-            <div className="p-6 overflow-y-auto flex-1 space-y-6">
-              <div className="grid grid-cols-3 gap-4">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div>
-                  <Label className="text-muted-foreground text-sm">Nama Baki</Label>
+                  <Label className="text-muted-foreground text-xs">Nama Baki</Label>
                   <p className="font-medium text-base">{selectedBaki.nama}</p>
                 </div>
               </div>
 
               <div>
-                <h4 className="text-sm font-semibold mb-2">
+                <h4 className="text-xs sm:text-sm font-semibold mb-2">
                   Daftar Barang
                   {!detailBarangLoading && (
                     <span className="text-muted-foreground font-normal ml-1">({detailBarang.length} item)</span>
@@ -362,7 +362,7 @@ export default function BakiPage() {
                     Tidak ada barang dalam baki ini.
                   </div>
                 ) : (
-                  <div className="rounded-md border">
+                  <div className="rounded-md border overflow-x-auto w-full">
                     <Table>
                       <TableHeader>
                         <TableRow>

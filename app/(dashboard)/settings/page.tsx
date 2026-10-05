@@ -15,12 +15,12 @@ const menuCards = [
 
 export default function SettingsPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 sm:gap-6 w-full min-w-0">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
           Pengaturan
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Pilih menu pengaturan yang ingin dikelola.
         </p>
       </div>

@@ -84,7 +84,7 @@ export default function KontakPage() {
         />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
 
-        <div className="relative mx-auto max-w-7xl px-6 py-20 sm:py-28">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20 lg:py-28">
           <div className="flex items-center gap-3 mb-5">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-gold/60" />
             <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-gold">Kontak</span>
@@ -100,9 +100,9 @@ export default function KontakPage() {
       </section>
 
       {/* Main content */}
-      <section className="py-24">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="grid lg:grid-cols-[1fr_1.4fr] gap-12 items-start">
+      <section className="py-12 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="grid lg:grid-cols-[1fr_1.4fr] gap-8 sm:gap-12 w-full items-start">
             {/* Left: contact info */}
             <div>
               <h2 className="text-xl font-semibold text-foreground mb-8">Informasi Kontak</h2>
@@ -183,7 +183,7 @@ export default function KontakPage() {
             </div>
 
             {/* Right: contact form */}
-            <div className="rounded-3xl border border-border bg-card p-8 sm:p-10">
+            <div className="rounded-3xl border border-border bg-card p-5 sm:p-8 lg:p-10">
               {submitted ? (
                 <div className="flex flex-col items-center justify-center text-center py-16 gap-4">
                   <div className="flex size-16 items-center justify-center rounded-full bg-gold/10 border border-gold/20">

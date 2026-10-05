@@ -330,39 +330,39 @@ export default function BarangPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="flex flex-col gap-4 sm:gap-6 w-full min-w-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Manajemen Inventaris
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             Kelola stok dan data seluruh perhiasan di inventaris toko.
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <Button variant="outline" onClick={handleExport} disabled={exporting}>
-            {exporting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <FileDown className="mr-2 size-4" />}
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none justify-center h-9" onClick={handleExport} disabled={exporting}>
+            {exporting ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : <FileDown className="mr-1.5 size-4" />}
             Export Excel
           </Button>
           {isAdmin && (
-            <Button variant="outline" onClick={() => { setImportKey((k) => k + 1); setImportOpen(true); }}>
-              <Upload className="mr-2 size-4" />
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none justify-center h-9" onClick={() => { setImportKey((k) => k + 1); setImportOpen(true); }}>
+              <Upload className="mr-1.5 size-4" />
               Import Excel
             </Button>
           )}
-          <Button onClick={() => handleOpenSheet()}>
-            <Plus className="mr-2 size-4" />
+          <Button size="sm" className="w-full sm:w-auto justify-center h-9" onClick={() => handleOpenSheet()}>
+            <Plus className="mr-1.5 size-4" />
             Tambah Barang
           </Button>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Stok Barang</CardTitle>
+      <Card className="overflow-hidden min-w-0">
+        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+          <CardTitle className="text-base sm:text-lg">Daftar Stok Barang</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {loading ? (
             <div className="flex justify-center p-8">
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -378,7 +378,7 @@ export default function BarangPage() {
                   className="pl-9"
                 />
               </div>
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto w-full">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -390,20 +390,20 @@ export default function BarangPage() {
                       <TableHead>Group</TableHead>
                       <TableHead>Harga Jual</TableHead>
                       <TableHead>Kondisi</TableHead>
-                      <TableHead className="w-[100px] text-center">Tindakan</TableHead>
+                      <TableHead className="w-[110px] text-center">Tindakan</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredData.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="h-24 text-center">
+                        <TableCell colSpan={9} className="h-24 text-center">
                           Belum ada data barang dalam inventaris.
                         </TableCell>
                       </TableRow>
                     ) : (
                       paginatedData.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell className="font-medium text-sm">{item.barcode}</TableCell>
+                          <TableCell className="font-medium text-xs sm:text-sm font-mono">{item.barcode}</TableCell>
                           <TableCell className="font-medium">{item.nama}</TableCell>
                           <TableCell>{getKaratName(item.karat)}</TableCell>
                           <TableCell>{item.berat}</TableCell>
@@ -411,7 +411,7 @@ export default function BarangPage() {
                           <TableCell>{(item as any).grup || "-"}</TableCell>
                           <TableCell>{formatRupiah(item.harga)}</TableCell>
                           <TableCell className="capitalize">{item.kondisi}</TableCell>
-                          <TableCell className="text-right space-x-1">
+                          <TableCell className="text-right space-x-1 whitespace-nowrap">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -450,12 +450,12 @@ export default function BarangPage() {
       </Card>
 
       {sheetOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleCloseSheet}>
-          <div className="bg-background rounded-lg shadow-lg max-w-lg w-full mx-4 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4" onClick={handleCloseSheet}>
+          <div className="bg-background rounded-xl shadow-xl max-w-lg w-full max-h-[92vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b">
               <div>
-                <h2 className="text-lg font-semibold">{editingId ? "Edit Barang" : "Tambah Barang"}</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="text-base sm:text-lg font-semibold">{editingId ? "Edit Barang" : "Tambah Barang"}</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {editingId
                     ? "Ubah data barang di bawah ini."
                     : "Masukkan detail barang baru ke inventaris."}
@@ -466,9 +466,9 @@ export default function BarangPage() {
               </Button>
             </div>
 
-            <form id="barang-form" onSubmit={handleSubmit} className="flex flex-col gap-5 p-6 overflow-y-auto">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="barcode">Barcode</Label>
+            <form id="barang-form" onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-5 p-4 sm:p-6 overflow-y-auto">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="barcode" className="text-xs sm:text-sm">Barcode</Label>
                 <Input
                   id="barcode"
                   value={formData.barcode}
@@ -478,8 +478,8 @@ export default function BarangPage() {
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="nama">Nama Barang</Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="nama" className="text-xs sm:text-sm">Nama Barang</Label>
                 <Input
                   id="nama"
                   value={formData.nama}
@@ -489,9 +489,9 @@ export default function BarangPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="karat_id">Kadar / Karat</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="karat_id" className="text-xs sm:text-sm">Kadar / Karat</Label>
                   <select
                     id="karat_id"
                     value={formData.karat_id}
@@ -508,8 +508,8 @@ export default function BarangPage() {
                   </select>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="berat">Berat (gr)</Label>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="berat" className="text-xs sm:text-sm">Berat (gr)</Label>
                   <Input
                     id="berat"
                     type="text"
@@ -521,8 +521,8 @@ export default function BarangPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="berat_atribut">Berat Atribut (gr)</Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="berat_atribut" className="text-xs sm:text-sm">Berat Atribut (gr)</Label>
                 <Input
                   id="berat_atribut"
                   type="text"
@@ -532,8 +532,8 @@ export default function BarangPage() {
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="harga">Harga (Rp)</Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="harga" className="text-xs sm:text-sm">Harga (Rp)</Label>
                 <Input
                   id="harga"
                   type="text"
@@ -547,9 +547,9 @@ export default function BarangPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="kondisi">Kondisi</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="kondisi" className="text-xs sm:text-sm">Kondisi</Label>
                   <select
                     id="kondisi"
                     value={formData.kondisi}
@@ -562,8 +562,8 @@ export default function BarangPage() {
                   </select>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="baki_id">Baki</Label>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="baki_id" className="text-xs sm:text-sm">Baki</Label>
                   <select
                     id="baki_id"
                     value={formData.baki_id}
@@ -580,8 +580,8 @@ export default function BarangPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="grup">Group</Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="grup" className="text-xs sm:text-sm">Group</Label>
                 <Input
                   id="grup"
                   type="text"
@@ -591,8 +591,8 @@ export default function BarangPage() {
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="photo">Foto Barang</Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="photo" className="text-xs sm:text-sm">Foto Barang</Label>
                 <Input
                   id="photo"
                   type="file"
@@ -600,7 +600,7 @@ export default function BarangPage() {
                   onChange={handleFileChange}
                 />
                 {formData.photo && (
-                  <div className="mt-2 relative h-32 w-32 overflow-hidden rounded-md border">
+                  <div className="mt-2 relative h-28 w-28 sm:h-32 sm:w-32 overflow-hidden rounded-md border">
                     <img
                       src={formData.photo}
                       alt="Preview"
@@ -611,7 +611,7 @@ export default function BarangPage() {
               </div>
             </form>
 
-            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t">
+            <div className="flex items-center justify-end gap-2 px-4 sm:px-6 py-3.5 border-t bg-muted/20">
               <Button type="button" variant="outline" onClick={handleCloseSheet}>
                 Batal
               </Button>
@@ -625,23 +625,23 @@ export default function BarangPage() {
       )}
 
       {detailOpen && selectedBarang && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleCloseDetail}>
-          <div className="bg-background rounded-lg shadow-lg max-w-lg w-full mx-4 max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4" onClick={handleCloseDetail}>
+          <div className="bg-background rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b">
               <div>
-                <h2 className="text-lg font-semibold">Detail Barang</h2>
-                <p className="text-sm text-muted-foreground">Rincian data untuk barang ini.</p>
+                <h2 className="text-base sm:text-lg font-semibold">Detail Barang</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">Rincian data untuk barang ini.</p>
               </div>
               <Button variant="ghost" size="icon" onClick={handleCloseDetail}>
                 <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </Button>
             </div>
 
-            <div className="p-6 overflow-y-auto flex-1 space-y-6">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-5">
               <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-muted-foreground">Foto Barang</span>
+                <span className="text-xs sm:text-sm font-semibold text-muted-foreground">Foto Barang</span>
                 {selectedBarang.photo ? (
-                  <div className="relative w-full h-64 rounded-md border overflow-hidden">
+                  <div className="relative w-full h-48 sm:h-64 rounded-lg border overflow-hidden">
                     <img
                       src={selectedBarang.photo}
                       alt={selectedBarang.nama}
@@ -649,44 +649,44 @@ export default function BarangPage() {
                     />
                   </div>
                 ) : (
-                  <div className="w-full h-64 bg-muted border rounded-md flex items-center justify-center text-muted-foreground">
+                  <div className="w-full h-44 sm:h-56 bg-muted border rounded-lg flex items-center justify-center text-xs sm:text-sm text-muted-foreground">
                     Tidak ada foto
                   </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <span className="text-sm font-semibold text-muted-foreground">Barcode</span>
-                  <p className="font-medium text-base">{selectedBarang.barcode}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-semibold text-muted-foreground">Barcode</span>
+                  <p className="font-mono font-medium text-sm sm:text-base">{selectedBarang.barcode}</p>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-sm font-semibold text-muted-foreground">Nama Barang</span>
-                  <p className="font-medium text-base">{selectedBarang.nama}</p>
+                <div className="space-y-0.5">
+                  <span className="text-xs font-semibold text-muted-foreground">Nama Barang</span>
+                  <p className="font-medium text-sm sm:text-base">{selectedBarang.nama}</p>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-sm font-semibold text-muted-foreground">Kadar</span>
-                  <p className="font-medium text-base">{getKaratName(selectedBarang.karat || selectedBarang)}</p>
+                <div className="space-y-0.5">
+                  <span className="text-xs font-semibold text-muted-foreground">Kadar</span>
+                  <p className="font-medium text-sm sm:text-base">{getKaratName(selectedBarang.karat || selectedBarang)}</p>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-sm font-semibold text-muted-foreground">Berat</span>
-                  <p className="font-medium text-base">{selectedBarang.berat} gr</p>
+                <div className="space-y-0.5">
+                  <span className="text-xs font-semibold text-muted-foreground">Berat</span>
+                  <p className="font-medium text-sm sm:text-base">{selectedBarang.berat} gr</p>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-sm font-semibold text-muted-foreground">Berat Atribut</span>
-                  <p className="font-medium text-base">{selectedBarang.berat_atribut ?? 0} gr</p>
+                <div className="space-y-0.5">
+                  <span className="text-xs font-semibold text-muted-foreground">Berat Atribut</span>
+                  <p className="font-medium text-sm sm:text-base">{selectedBarang.berat_atribut ?? 0} gr</p>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-sm font-semibold text-muted-foreground">Harga</span>
-                  <p className="font-medium text-base">{formatRupiah(selectedBarang.harga)}</p>
+                <div className="space-y-0.5">
+                  <span className="text-xs font-semibold text-muted-foreground">Harga</span>
+                  <p className="font-medium text-sm sm:text-base">{formatRupiah(selectedBarang.harga)}</p>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-sm font-semibold text-muted-foreground">Kondisi</span>
-                  <p className="font-medium text-base capitalize">{selectedBarang.kondisi}</p>
+                <div className="space-y-0.5">
+                  <span className="text-xs font-semibold text-muted-foreground">Kondisi</span>
+                  <p className="font-medium text-sm sm:text-base capitalize">{selectedBarang.kondisi}</p>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-sm font-semibold text-muted-foreground">Group</span>
-                  <p className="font-medium text-base">{selectedBarang.grup || "-"}</p>
+                <div className="space-y-0.5">
+                  <span className="text-xs font-semibold text-muted-foreground">Group</span>
+                  <p className="font-medium text-sm sm:text-base">{selectedBarang.grup || "-"}</p>
                 </div>
               </div>
             </div>

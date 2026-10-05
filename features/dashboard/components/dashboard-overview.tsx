@@ -26,13 +26,13 @@ export function DashboardOverview() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 sm:gap-6 w-full min-w-0">
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
           Dashboard
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
           Ringkasan performa toko emas Anda hari ini.
         </p>
       </div>
@@ -41,14 +41,14 @@ export function DashboardOverview() {
       <StatsCards data={data} loading={loading} />
 
       {/* Charts row */}
-      <div className="grid gap-6 lg:grid-cols-7">
-        <div className="lg:col-span-4">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-7 min-w-0">
+        <div className="lg:col-span-4 min-w-0">
           <RevenueChart
             data={data?.penjualan_chart ?? []}
             loading={loading}
           />
         </div>
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 min-w-0">
           <GoldDistribution
             data={data?.barang_chart ?? []}
             loading={loading}

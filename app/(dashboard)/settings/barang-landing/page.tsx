@@ -187,10 +187,10 @@ export default function BarangLandingPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Kelola Barang Landing
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Kelola barang yang tampil di landing page website.
           </p>
         </div>
@@ -220,7 +220,7 @@ export default function BarangLandingPage() {
                   className="pl-9"
                 />
               </div>
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto w-full">
                 <Table>
                   <TableHeader>
                     <TableRow>

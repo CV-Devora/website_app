@@ -41,22 +41,25 @@ export function StorefrontHeader() {
   }, [mobileMenuOpen]);
 
   return (
-    <header
-      className={`sticky top-0 z-40 w-full transition-all duration-500 ${
-        scrolled
-          ? "bg-[#FBF9F1] backdrop-blur-xl shadow-sm border-b border-gold/10"
-          : "bg-[#FBF9F1] backdrop-blur-md border-b border-transparent"
-      }`}
-    >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
+    <header className="sticky top-0 z-40 w-full">
+      {/* Top bar background */}
+      <div
+        className={`absolute inset-0 transition-all duration-500 ${
+          scrolled
+            ? "bg-[#FBF9F1]/95 backdrop-blur-xl shadow-sm border-b border-gold/10"
+            : "bg-[#FBF9F1] border-b border-transparent"
+        }`}
+      />
+
+      <div className="relative z-50 mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 z-50 group"
+          className="flex items-center gap-2.5 group"
           onClick={() => setMobileMenuOpen(false)}
         >
           <div className="flex items-center justify-center rounded-full group-hover:shadow-gold-glow transition-all duration-300">
-            <img src="/jason.png" className="w-12 h-8"/>
+            <img src="/jason.png" className="w-12 h-8" alt="Jason Jewelry" />
           </div>
           <span className="text-lg font-semibold tracking-wide text-foreground">
             <span className="italic text-gold">Jason</span>{" "}
@@ -99,7 +102,7 @@ export function StorefrontHeader() {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden z-50 flex items-center justify-center size-9 rounded-lg border border-border hover:border-gold/30 transition-colors duration-200 text-foreground"
+          className="md:hidden flex items-center justify-center size-9 rounded-lg border border-border hover:border-gold/30 transition-colors duration-200 text-foreground"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle Menu"
         >
@@ -109,7 +112,7 @@ export function StorefrontHeader() {
 
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 top-0 z-40 bg-background/98 backdrop-blur-xl transition-all duration-300 ease-in-out md:hidden ${
+        className={`fixed inset-0 top-0 left-0 w-screen h-screen z-40 bg-[#FBF9F1] dark:bg-background transition-all duration-300 ease-in-out md:hidden flex flex-col ${
           mobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
         }`}
       >
@@ -117,26 +120,15 @@ export function StorefrontHeader() {
         <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
 
         <div className="flex flex-col h-full pt-20 pb-10 px-6 overflow-y-auto">
-          {/* Mobile Logo */}
-          <div className="flex items-center gap-2.5 mb-10">
-            <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-gold-dark to-gold">
-              <Gem className="size-4 text-white" strokeWidth={1.5} />
-            </div>
-            <span className="text-lg font-semibold tracking-wide text-foreground">
-              <span className="italic text-gold">Jason</span>{" "}
-              <span className="font-light">Jewelry</span>
-            </span>
-          </div>
-
           {/* Mobile Nav Items */}
-          <nav className="flex flex-col gap-1 mb-8">
-            {navItems.map((item, idx) => {
+          <nav className="flex flex-col gap-1.5 mb-8">
+            {navItems.map((item) => {
               const active = pathname === item.href;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  style={{ animationDelay: `${idx * 60}ms` }}
+                  onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-200 ${
                     active
                       ? "bg-gold/10 text-gold border border-gold/20"
@@ -154,12 +146,14 @@ export function StorefrontHeader() {
           <div className="flex flex-col gap-3 mt-auto">
             <Link
               href="/produk"
+              onClick={() => setMobileMenuOpen(false)}
               className="w-full text-center text-base font-medium py-3.5 rounded-xl bg-gradient-to-r from-gold-dark via-gold to-gold-light text-white shadow-gold-glow hover:scale-[1.01] transition-all duration-200"
             >
               Lihat Koleksi
             </Link>
             <Link
               href={isLoggedIn ? "/dashboard" : "/login"}
+              onClick={() => setMobileMenuOpen(false)}
               className="w-full text-center text-base font-medium py-3.5 rounded-xl border border-border text-foreground hover:border-gold/30 hover:text-gold transition-all duration-200"
             >
               {isLoggedIn ? "Masuk ke Dashboard" : "Masuk ke Sistem"}

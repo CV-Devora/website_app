@@ -35,7 +35,13 @@ const navItems: NavItem[] = [
   { label: "Pengaturan", href: "/settings", icon: Settings, group: "Sistem", allowedRoles: ["admin"] },
 ];
 
-export function NavLinks({ collapsed }: { collapsed?: boolean }) {
+export function NavLinks({
+  collapsed,
+  onNavigate,
+}: {
+  collapsed?: boolean;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const [userRole, setUserRole] = useState<string | null>(null);
 
@@ -88,6 +94,7 @@ export function NavLinks({ collapsed }: { collapsed?: boolean }) {
                 key={item.href}
                 href={item.href}
                 title={collapsed ? item.label : undefined}
+                onClick={onNavigate}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",

@@ -314,10 +314,10 @@ export default function PenjualanPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Transaksi Penjualan
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Pantau dan kelola seluruh transaksi penjualan kepada pelanggan.
           </p>
         </div>
@@ -329,8 +329,8 @@ export default function PenjualanPage() {
         )}
       </div>
 
-      <Card>
-        <CardHeader className="flex justify-between">
+      <Card className="overflow-hidden min-w-0">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:p-6">
           <CardTitle>Riwayat Transaksi Penjualan</CardTitle>
           {appliedRange && (
             <>
@@ -362,7 +362,7 @@ export default function PenjualanPage() {
                     type="date"
                     value={dateFrom}
                     onChange={(e) => setDateFrom(e.target.value)}
-                    className="h-9 w-[170px]"
+                    className="h-9 w-full sm:w-[160px]"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -372,7 +372,7 @@ export default function PenjualanPage() {
                     type="date"
                     value={dateTo}
                     onChange={(e) => setDateTo(e.target.value)}
-                    className="h-9 w-[170px]"
+                    className="h-9 w-full sm:w-[160px]"
                   />
                 </div>
                 <Button className="h-9" onClick={applyDateRange}>Cari</Button>
@@ -393,7 +393,7 @@ export default function PenjualanPage() {
                 className="pl-9"
               />
             </div>
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto w-full">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -656,7 +656,7 @@ export default function PenjualanPage() {
           </AlertDialogHeader>
 
           {detailItem && (
-            <div className="grid grid-cols-2 gap-x-12 gap-y-3 py-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 sm:gap-x-12 gap-y-3 py-2">
               <DetailRow label="Jam" value={formatTime(detailItem.created_at)} />
               <DetailRow label="No. Faktur" value={detailItem.no_faktur} />
               <DetailRow label="Nama Pelanggan" value={detailItem.nama} />

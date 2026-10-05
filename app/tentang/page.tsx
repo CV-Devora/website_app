@@ -50,7 +50,7 @@ export default function TentangPage() {
         />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
 
-        <div className="relative mx-auto max-w-7xl px-6 py-20 sm:py-28">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20 lg:py-28">
           <div className="flex items-center gap-3 mb-5">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-gold/60" />
             <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-gold">Tentang Kami</span>
@@ -66,8 +66,8 @@ export default function TentangPage() {
       </section>
 
       {/* Story section */}
-      <section className="py-24">
-        <div className="mx-auto max-w-7xl px-6">
+      <section className="py-12 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Image */}
             <div className="relative rounded-3xl overflow-hidden aspect-[4/3] bg-muted border border-border">
@@ -120,8 +120,8 @@ export default function TentangPage() {
       </section>
 
       {/* Values */}
-      <section className="py-24 bg-muted/30 border-y border-border/60">
-        <div className="mx-auto max-w-7xl px-6">
+      <section className="py-12 sm:py-24 bg-muted/30 border-y border-border/60">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-3 mb-5">
               <div className="h-px w-8 bg-gradient-to-r from-transparent to-gold/60" />
@@ -151,8 +151,8 @@ export default function TentangPage() {
       </section>
 
       {/* Timeline */}
-      <section className="py-24">
-        <div className="mx-auto max-w-7xl px-6">
+      <section className="py-12 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-3 mb-5">
               <div className="h-px w-8 bg-gradient-to-r from-transparent to-gold/60" />
@@ -200,14 +200,14 @@ export default function TentangPage() {
       </section>
 
       {/* CTA */}
-      <section className="relative bg-foreground py-24 overflow-hidden">
+      <section className="relative bg-foreground py-16 sm:py-24 overflow-hidden">
         <div
           className="absolute inset-0"
           style={{
             background: "radial-gradient(ellipse 70% 80% at 50% 50%, oklch(0.72 0.14 75 / 0.06) 0%, transparent 70%)",
           }}
         />
-        <div className="relative mx-auto max-w-3xl px-6 text-center">
+        <div className="relative mx-auto max-w-3xl px-4 sm:px-6 text-center">
           <Gem className="size-12 text-gold/30 mx-auto mb-6" strokeWidth={0.8} />
           <h2 className="text-3xl font-semibold text-background mb-4">
             Siap memilih perhiasan Anda?

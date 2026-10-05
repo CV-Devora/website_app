@@ -31,9 +31,9 @@ export function FooterFull() {
       <div className="absolute inset-0 bg-gradient-to-b from-foreground via-foreground to-foreground/95" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
 
-      <div className="relative mx-auto max-w-7xl px-6 pt-16 pb-10">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-16 pb-10">
         {/* Top section */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 pb-12 border-b border-background/10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10 pb-12 border-b border-background/10">
           {/* Brand column */}
           <div>
             <p className="text-xl text-background font-semibold mb-1">
@@ -78,11 +78,11 @@ export function FooterFull() {
 
           {/* Link columns */}
           {columns.map((col) => (
-            <div key={col.title} className="flex flex-col items-center">
+            <div key={col.title} className="flex flex-col items-start sm:items-center">
               <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-gold/40 mb-5">
                 {col.title}
               </p>
-              <ul className="flex flex-col gap-2.5 items-center">
+              <ul className="flex flex-col gap-2.5 items-start sm:items-center">
                 {col.links.map((link) => (
                   <li key={link.label}>
                     <Link

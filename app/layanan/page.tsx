@@ -78,7 +78,7 @@ export default function LayananPage() {
         />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
 
-        <div className="relative mx-auto max-w-7xl px-6 py-20 sm:py-28">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20 lg:py-28">
           <div className="flex items-center gap-3 mb-5">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-gold/60" />
             <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-gold">Layanan</span>
@@ -95,8 +95,8 @@ export default function LayananPage() {
       </section>
 
       {/* Services */}
-      <section className="py-24">
-        <div className="mx-auto max-w-7xl px-6 space-y-10">
+      <section className="py-12 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 space-y-6 sm:space-y-10">
           {services.map((service, idx) => (
             <div
               key={service.id}
@@ -106,7 +106,7 @@ export default function LayananPage() {
               }`}
             >
               {/* Content side */}
-              <div className={`p-10 sm:p-14 flex flex-col justify-center ${idx % 2 === 1 ? "lg:col-start-2" : ""}`}>
+              <div className={`p-6 sm:p-10 lg:p-14 flex flex-col justify-center ${idx % 2 === 1 ? "lg:col-start-2" : ""}`}>
                 <div className="flex size-14 items-center justify-center rounded-2xl bg-gold/8 mb-6 group-hover:bg-gold/12 transition-colors duration-300">
                   {service.icon}
                 </div>
@@ -140,7 +140,7 @@ export default function LayananPage() {
               </div>
 
               {/* Visual side */}
-              <div className={`relative min-h-[280px] lg:min-h-0 flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted/20 border-t lg:border-t-0 ${
+              <div className={`relative min-h-[180px] sm:min-h-[220px] lg:min-h-0 flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted/20 border-t lg:border-t-0 ${
                 idx % 2 === 1 ? "lg:border-r lg:col-start-1" : "lg:border-l"
               } border-border/60`}>
                 <div className="flex flex-col items-center gap-4 opacity-30">
@@ -172,8 +172,8 @@ export default function LayananPage() {
       </section>
 
       {/* Why us */}
-      <section className="py-24 bg-muted/30 border-y border-border/60">
-        <div className="mx-auto max-w-7xl px-6">
+      <section className="py-12 sm:py-24 bg-muted/30 border-y border-border/60">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-3 mb-5">
               <div className="h-px w-8 bg-gradient-to-r from-transparent to-gold/60" />

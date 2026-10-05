@@ -22,7 +22,7 @@ export function AppSidebar() {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileOpen(false)}
           aria-hidden
         />
@@ -30,48 +30,57 @@ export function AppSidebar() {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 flex flex-col bg-sidebar text-sidebar-foreground",
-          "border-r border-sidebar-border transition-all duration-300 ease-in-out",
-          collapsed ? "w-[64px]" : "w-[240px]",
+          "fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar text-sidebar-foreground",
+          "border-r border-sidebar-border transition-all duration-300 ease-in-out shadow-xl lg:shadow-none",
+          "w-[270px] max-w-[85vw]",
+          collapsed ? "lg:w-[64px]" : "lg:w-[240px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Logo / Brand */}
         <div
           className={cn(
-            "flex h-16 shrink-0 items-center border-b border-sidebar-border px-3",
-            collapsed ? "justify-center" : "justify-between"
+            "flex h-16 shrink-0 items-center border-b border-sidebar-border px-3.5",
+            collapsed ? "lg:justify-center justify-between" : "justify-between"
           )}
         >
-          <div className="flex items-center gap-4 ml-2 overflow-hidden">
+          <div className="flex items-center gap-3 overflow-hidden">
             <div className="flex shrink-0 items-center justify-center">
-              <img src="jason.png" alt="Jason Jewelry" className={collapsed ? "w-8 h-8" : "w-12 h-10"} />
+              <img
+                src="/jason.png"
+                alt="Jason Jewelry"
+                className={cn(
+                  "h-8 w-auto object-contain transition-all",
+                  collapsed ? "lg:h-7 lg:w-7" : "h-9 w-auto"
+                )}
+              />
             </div>
-            {!collapsed && (
-              <div className="overflow-hidden">
-                <p className="truncate text-sm font-semibold tracking-tight text-sidebar-foreground">
-                  Toko Emas
-                </p>
-                <p className="truncate text-[10px] text-sidebar-foreground/50">
-                  Jason Jewelry
-                </p>
-              </div>
-            )}
+            <div className={cn("overflow-hidden", collapsed && "lg:hidden")}>
+              <p className="truncate text-sm font-semibold tracking-tight text-sidebar-foreground">
+                Toko Emas
+              </p>
+              <p className="truncate text-[11px] text-sidebar-foreground/60 font-medium">
+                Jason Jewelry
+              </p>
+            </div>
           </div>
 
           {/* Mobile close */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="flex size-6 items-center justify-center rounded text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground lg:hidden"
+            className="flex size-8 items-center justify-center rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground lg:hidden"
             aria-label="Close sidebar"
           >
-            <X className="size-4" />
+            <X className="size-5" />
           </button>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden p-3">
-          <NavLinks collapsed={collapsed} />
+          <NavLinks
+            collapsed={collapsed}
+            onNavigate={() => setMobileOpen(false)}
+          />
         </nav>
       </aside>
     </>

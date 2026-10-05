@@ -43,16 +43,16 @@ function StatCard({
 
   return (
     <Card className="overflow-hidden">
-      <CardContent className="px-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">{label}</p>
-            <p className="text-2xl font-bold tracking-tight text-foreground">
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1 min-w-0 flex-1">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate" title={label}>{label}</p>
+            <p className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-foreground truncate" title={value}>
               {value}
             </p>           
           </div>
-          <div className={cn("flex size-12 shrink-0 items-center justify-center rounded-xl", color)}>
-            <Icon className="size-6 text-white" />
+          <div className={cn("flex size-10 sm:size-12 shrink-0 items-center justify-center rounded-xl", color)}>
+            <Icon className="size-5 sm:size-6 text-white" />
           </div>
         </div>
       </CardContent>
@@ -100,7 +100,7 @@ export function StatsCards({ data, loading }: StatsCardsProps) {
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
       {stats.map((stat) => (
         <StatCard key={stat.label} {...stat} loading={loading} />
       ))}

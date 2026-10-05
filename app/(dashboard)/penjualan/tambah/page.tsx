@@ -135,25 +135,25 @@ export default function TambahPenjualanPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/penjualan")}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={() => router.push("/penjualan")} className="mr-2 shrink-0">
             <ArrowLeft className="size-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               Tambah Penjualan
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Isi seluruh data penjualan secara manual.
             </p>
           </div>
         </div>
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => router.push("/penjualan")}>
+        <div className="flex justify-end gap-3 w-full sm:w-auto">
+          <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => router.push("/penjualan")}>
             Batal
           </Button>
-          <Button type="button" onClick={handleSubmit} disabled={submitting}>
+          <Button type="button" className="flex-1 sm:flex-none" onClick={handleSubmit} disabled={submitting}>
             {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
             Simpan Penjualan
           </Button>
@@ -162,10 +162,10 @@ export default function TambahPenjualanPage() {
 
       <div className="flex flex-col gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Data Penjualan</CardTitle>
+          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+            <CardTitle className="text-base sm:text-lg">Data Penjualan</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-4 sm:p-6 pt-0">
             <div className="flex flex-col gap-3">
               <Label htmlFor="no_faktur">Nomor Faktur</Label>
               <Input
@@ -190,10 +190,10 @@ export default function TambahPenjualanPage() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Data Barang</CardTitle>
+          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+            <CardTitle className="text-base sm:text-lg">Data Barang</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-4 sm:p-6 pt-0">
             <div className="flex flex-col gap-3">
               <Label>Nama Barang</Label>
               <Combobox.Root
@@ -286,10 +286,10 @@ export default function TambahPenjualanPage() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Metode Pembayaran</CardTitle>
+          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+            <CardTitle className="text-base sm:text-lg">Metode Pembayaran</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 p-4 sm:p-6 pt-0">
             <div className="flex flex-col gap-3">
               <Label htmlFor="cash">Cash (Rp)</Label>
               <Input

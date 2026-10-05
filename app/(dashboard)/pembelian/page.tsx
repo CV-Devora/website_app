@@ -301,10 +301,10 @@ export default function PembelianPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Transaksi Pembelian
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Pantau dan kelola seluruh transaksi pembelian dari pemasok.
           </p>
         </div>
@@ -316,8 +316,8 @@ export default function PembelianPage() {
         )}
       </div>
 
-      <Card>
-        <CardHeader className="flex justify-between">
+      <Card className="overflow-hidden min-w-0">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:p-6">
           <CardTitle>Riwayat Transaksi Pembelian</CardTitle>
           {appliedRange && (
             <>
@@ -349,7 +349,7 @@ export default function PembelianPage() {
                     type="date"
                     value={dateFrom}
                     onChange={(e) => setDateFrom(e.target.value)}
-                    className="h-9 w-[170px]"
+                    className="h-9 w-full sm:w-[160px]"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -359,7 +359,7 @@ export default function PembelianPage() {
                     type="date"
                     value={dateTo}
                     onChange={(e) => setDateTo(e.target.value)}
-                    className="h-9 w-[170px]"
+                    className="h-9 w-full sm:w-[160px]"
                   />
                 </div>
                 <Button className="h-9" onClick={applyDateRange}>Cari</Button>
@@ -380,7 +380,7 @@ export default function PembelianPage() {
                 className="pl-9"
               />
             </div>
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto w-full">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -561,14 +561,14 @@ export default function PembelianPage() {
               </Button>
             </div>
 
-            <div className="p-6 overflow-y-hidden flex-1">
+            <div className="p-4 sm:p-6 overflow-y-hidden flex-1">
               {detailLoading ? (
                 <div className="flex justify-center p-8">
                   <Loader2 className="size-8 animate-spin text-muted-foreground" />
                 </div>
               ) : detailPembelian ? (
                 <div className="flex flex-col gap-6">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground text-xs">No. Faktur</Label>
                       <p className="font-medium">{detailPembelian.no_faktur}</p>
@@ -590,7 +590,7 @@ export default function PembelianPage() {
                   <div>
                     <h4 className="text-sm font-semibold mb-2">Detail Barang</h4>
                     {detailPembelian.barang ? (
-                      <div className="rounded-md border p-4 grid grid-cols-2 gap-x-6 gap-y-3">
+                      <div className="rounded-md border p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                         <div>
                           <Label className="text-muted-foreground text-xs">Barcode</Label>
                           <p className="font-medium text-sm font-mono">{detailPembelian.barang.barcode}</p>

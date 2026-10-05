@@ -7,7 +7,7 @@ const stats = [
 
 export function JourneyStats() {
   return (
-    <section id="journey" className="relative py-28 overflow-hidden border-y border-border/60">
+    <section id="journey" className="relative py-16 sm:py-28 overflow-hidden border-y border-border/60">
       {/* Background */}
       <div
         className="absolute inset-0 opacity-[0.025]"
@@ -18,7 +18,7 @@ export function JourneyStats() {
       />
       <div className="absolute inset-0 bg-gradient-to-br from-background via-muted/20 to-background" />
 
-      <div className="relative mx-auto max-w-7xl px-6">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         {/* Section label */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-3 mb-5">
@@ -40,10 +40,10 @@ export function JourneyStats() {
           {stats.map((stat, idx) => (
             <div
               key={stat.label}
-              className="group relative rounded-2xl border border-border bg-card p-8 text-center hover:border-gold/35 hover:shadow-gold-glow transition-all duration-300"
+              className="group relative rounded-2xl border border-border bg-card p-5 sm:p-8 text-center hover:border-gold/35 hover:shadow-gold-glow transition-all duration-300"
             >
               {/* Number */}
-              <p className="text-5xl sm:text-6xl font-bold text-shimmer-gold mb-3">
+              <p className="text-4xl sm:text-5xl lg:text-6xl font-bold text-shimmer-gold mb-3">
                 {stat.value}
               </p>
               {/* Label */}

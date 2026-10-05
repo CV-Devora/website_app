@@ -56,11 +56,11 @@ export function RecentTransactions({
     .slice(0, 10);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Aktivitas Transaksi Terbaru</CardTitle>
+    <Card className="overflow-hidden min-w-0">
+      <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+        <CardTitle className="text-base sm:text-lg">Aktivitas Transaksi Terbaru</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 overflow-x-auto">
         {merged.length === 0 ? (
           <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
             Belum ada data transaksi yang tersedia.

@@ -67,7 +67,7 @@ function ProdukContent() {
         />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
 
-        <div className="relative mx-auto max-w-7xl px-6 py-16 sm:py-20">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-gold/60" />
             <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-gold">
@@ -84,11 +84,11 @@ function ProdukContent() {
       </section>
 
       {/* Main content */}
-      <section className="flex-1 mx-auto max-w-7xl w-full px-6 py-10">
+      <section className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 py-6 sm:py-10">
         {/* Search + Filter bar */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 mb-5 sm:mb-8">
           {/* Search input */}
-          <div className="relative flex-1 max-w-sm">
+          <div className="relative flex-1 max-w-full sm:max-w-sm">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               type="text"

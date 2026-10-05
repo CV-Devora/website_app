@@ -100,7 +100,7 @@ export default function LoginPage() {
       </div>
 
       {/* ─── Right panel: form ─── */}
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 sm:px-12 lg:px-16">
+      <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 sm:px-8 sm:py-12 lg:px-16">
         <div className="w-full max-w-sm space-y-8">
           {/* Mobile brand */}
           <div className="flex flex-col items-center gap-2 lg:hidden">
@@ -121,7 +121,7 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-5">
             {error && (
-              <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs sm:text-sm text-red-600">
                 <AlertCircle className="size-4 shrink-0" />
                 {error}
               </div>

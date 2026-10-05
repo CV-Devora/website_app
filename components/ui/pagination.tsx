@@ -148,10 +148,10 @@ function Pagination({ currentPage, totalPages, onPageChange, perPage, onPerPageC
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 mt-4 w-full">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Label htmlFor="rows-per-page" className="text-sm text-muted-foreground whitespace-nowrap">
-          Baris per halaman
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 mt-4 w-full">
+      <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-2 text-xs sm:text-sm text-muted-foreground">
+        <Label htmlFor="rows-per-page" className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+          Baris per halaman:
         </Label>
         <select
           id="rows-per-page"
@@ -165,7 +165,7 @@ function Pagination({ currentPage, totalPages, onPageChange, perPage, onPerPageC
         </select>
       </div>
       {showNav && (
-      <PaginationNav>
+      <PaginationNav className="justify-center sm:justify-end w-full sm:w-auto overflow-x-auto py-1">
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious

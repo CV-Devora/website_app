@@ -17,10 +17,10 @@ const stores = [
 
 export function StoreLocations() {
   return (
-    <section className="py-24">
-      <div className="mx-auto max-w-7xl px-6">
+    <section className="py-12 sm:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
         {/* Section header */}
-        <div className="text-center mb-14">
+        <div className="text-center mb-8 sm:mb-14">
           <div className="inline-flex items-center gap-3 mb-5">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-gold/60" />
             <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-gold">
@@ -40,7 +40,7 @@ export function StoreLocations() {
           {stores.map((store) => (
             <div
               key={store.name}
-              className={`group relative rounded-2xl border bg-card p-7 transition-all duration-300 hover:shadow-gold-glow ${
+              className={`group relative rounded-2xl border bg-card p-5 sm:p-7 transition-all duration-300 hover:shadow-gold-glow ${
                 store.featured
                   ? "border-gold/30 shadow-gold-glow"
                   : "border-border hover:border-gold/25"

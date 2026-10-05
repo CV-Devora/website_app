@@ -165,29 +165,29 @@ export default function KaratPage() {
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="flex flex-col gap-4 sm:gap-6 w-full min-w-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Manajemen Kadar Emas
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             Kelola jenis kadar karat beserta harga jual per gram.
           </p>
         </div>
         {userRole === "admin" && (
-          <Button onClick={() => handleOpenSheet()}>
-            <Plus className="mr-2 size-4" />
+          <Button size="sm" className="w-full sm:w-auto justify-center h-9" onClick={() => handleOpenSheet()}>
+            <Plus className="mr-1.5 size-4" />
             Tambah Karat
           </Button>
         )}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Kadar Karat</CardTitle>
+      <Card className="overflow-hidden min-w-0">
+        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+          <CardTitle className="text-base sm:text-lg">Daftar Kadar Karat</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {loading ? (
             <div className="flex justify-center p-8">
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -203,7 +203,7 @@ export default function KaratPage() {
                 className="pl-9"
               />
             </div>
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto w-full">
               <Table>
                 <TableHeader>
                   <TableRow>
