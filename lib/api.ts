@@ -50,9 +50,14 @@ async function downloadFile(path: string, fallbackName: string): Promise<void> {
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const method = init?.method?.toUpperCase() ?? "GET";
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
-    headers: { ...getAuthHeaders(), ...(init?.headers ?? {}) },
+    ...(method === "GET" ? { cache: "no-store" as const } : {}),
+    headers: {
+      ...getAuthHeaders(),
+      ...(init?.headers ?? {}),
+    },
   });
   if (res.status === 401 && typeof window !== "undefined") {
     localStorage.removeItem("token");
