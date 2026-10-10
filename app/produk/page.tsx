@@ -19,10 +19,10 @@ function ProdukContent() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    api.barang
+    api.barangLanding
       .list()
       .then((res) => setBarangs(res.data as BarangCardData[]))
-      .catch((err) => console.error("Failed to fetch barang:", err))
+      .catch((err) => console.error("Failed to fetch barang landing:", err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -31,14 +31,7 @@ function ProdukContent() {
 
     // Apply filter
     if (activeFilter !== "all") {
-      if (activeFilter === "baru" || activeFilter === "bekas") {
-        result = result.filter((b) => b.kondisi === activeFilter);
-      } else {
-        result = result.filter((b) => {
-          const k = typeof b.karat === "object" && b.karat ? (b.karat as any).name : b.karat;
-          return parseInt(k, 10) === parseInt(activeFilter, 10);
-        });
-      }
+      result = result.filter((b) => parseInt(b.karat, 10) === parseInt(activeFilter, 10));
     }
 
     // Apply search

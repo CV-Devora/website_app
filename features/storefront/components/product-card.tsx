@@ -1,18 +1,15 @@
 import Link from "next/link";
 import { Gem, ArrowRight } from "lucide-react";
+import { resolvePhotoUrl } from "@/lib/api";
 
 export interface BarangCardData {
   id: string;
   nama: string;
-  karat: any;
+  karat: string;
   berat: number;
   harga: number;
   photo?: string;
-  kondisi: string;
-}
-
-function isValidPhoto(url?: string) {
-  return !!url && /^https?:\/\//.test(url);
+  kondisi?: string;
 }
 
 function formatRupiah(number: number) {
@@ -24,11 +21,8 @@ function formatRupiah(number: number) {
 }
 
 export function ProductCard({ barang }: { barang: BarangCardData }) {
-  const validPhoto = isValidPhoto(barang.photo);
-  const karatLabel =
-    typeof barang.karat === "object" && barang.karat
-      ? (barang.karat as any).name
-      : barang.karat;
+  const photoUrl = resolvePhotoUrl(barang.photo);
+  const karatLabel = barang.karat;
 
   return (
     <Link
@@ -37,10 +31,10 @@ export function ProductCard({ barang }: { barang: BarangCardData }) {
     >
       {/* Image */}
       <div className="relative aspect-square bg-muted overflow-hidden">
-        {validPhoto ? (
+        {photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={barang.photo}
+            src={photoUrl}
             alt={barang.nama}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />

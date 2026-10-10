@@ -7,21 +7,16 @@ import { api } from "@/lib/api";
 import { Topbar } from "@/features/storefront/components/topbar";
 import { StorefrontHeader } from "@/features/storefront/components/storefront-header";
 import { FooterFull } from "@/features/storefront/components/footer-full";
+import { resolvePhotoUrl } from "@/lib/api";
 import { ArrowLeft, Gem, Loader2, Shield, Weight, Tag, Barcode } from "lucide-react";
 
 interface Barang {
   id: string;
-  barcode: string;
   nama: string;
-  karat: number;
+  karat: string;
   berat: number;
   harga: number;
   photo?: string;
-  kondisi: string;
-}
-
-function isValidPhoto(url?: string) {
-  return !!url && /^https?:\/\//.test(url);
 }
 
 function formatRupiah(number: number) {
@@ -46,11 +41,11 @@ export default function ProdukDetailPage() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    api.barang
+    api.barangLanding
       .get(params.id)
       .then((res) => setBarang(res.data as Barang))
       .catch((err) => {
-        console.error("Failed to fetch barang detail:", err);
+        console.error("Failed to fetch barang landing detail:", err);
         setNotFound(true);
       })
       .finally(() => setLoading(false));
@@ -82,10 +77,10 @@ export default function ProdukDetailPage() {
           <div className="grid sm:grid-cols-2 gap-12">
             {/* Photo */}
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted border border-border">
-              {isValidPhoto(barang.photo) ? (
+              {resolvePhotoUrl(barang.photo) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={barang.photo}
+                  src={resolvePhotoUrl(barang.photo)}
                   alt={barang.nama}
                   className="h-full w-full object-cover"
                 />
@@ -103,17 +98,10 @@ export default function ProdukDetailPage() {
               {/* Karat badge */}
               <div className="absolute top-5 right-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gold-dark to-gold shadow-lg">
                 <span className="font-mono text-sm font-bold text-white">
-                  {typeof barang.karat === "object" && barang.karat ? (barang.karat as any).name : barang.karat}K
+                  {barang.karat}K
                 </span>
               </div>
 
-              {barang.kondisi === "bekas" && (
-                <div className="absolute top-5 left-5 rounded-full bg-foreground/85 backdrop-blur-sm px-3 py-1.5">
-                  <span className="font-mono text-[11px] uppercase tracking-wider text-background font-medium">
-                    Bekas
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Detail */}
@@ -134,10 +122,8 @@ export default function ProdukDetailPage() {
                 </div>
                 <div className="divide-y divide-border">
                   {[
-                    { label: "Barcode", value: barang.barcode },
-                    { label: "Karat", value: `${typeof barang.karat === "object" && barang.karat ? (barang.karat as any).name : barang.karat}K` },
+                    { label: "Karat", value: `${barang.karat}K` },
                     { label: "Berat", value: `${barang.berat} gram` },
-                    { label: "Kondisi", value: barang.kondisi },
                   ].map((row) => (
                     <div key={row.label} className="flex items-center justify-between px-5 py-4">
                       <div className="flex items-center gap-3">

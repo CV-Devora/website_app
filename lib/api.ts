@@ -1,5 +1,13 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://serviceapp-production-8a31.up.railway.app/api/v1";
 const UPLOAD_BASE = API_BASE.replace("/api/v1", "");
+
+export function resolvePhotoUrl(photo?: string | null): string | undefined {
+  const value = photo?.trim();
+  if (!value) return undefined;
+  if (/^(https?:|data:|blob:)/i.test(value)) return value;
+
+  return `${UPLOAD_BASE}/${value.replace(/^\/+/, "")}`;
+}
 
 function getAuthHeaders(): HeadersInit {
   if (typeof window === "undefined") return {};
@@ -162,7 +170,12 @@ export const api = {
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message ?? "Upload failed");
-    return `${UPLOAD_BASE}${json.data}`;
+    if (typeof json.data !== "string") {
+      throw new Error("Upload response tidak berisi URL foto yang valid");
+    }
+    const photoUrl = resolvePhotoUrl(json.data);
+    if (!photoUrl) throw new Error("Upload response berisi URL foto kosong");
+    return photoUrl;
   },
   baki: {
     list: () => apiFetch<{ code: number; data: unknown[] }>("/baki"),

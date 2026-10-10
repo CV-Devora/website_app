@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { api } from "@/lib/api";
+import { api, resolvePhotoUrl } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,31 @@ interface Barang {
   grup: string;
 }
 
+interface PenjualanWithBarang {
+  barang?: Array<{ id?: string }>;
+}
+
+function filterSoldBarangs(barangs: Barang[], penjualanData: unknown): Barang[] {
+  if (!Array.isArray(penjualanData)) return barangs;
+
+  const soldIds = new Set(
+    (penjualanData as PenjualanWithBarang[]).flatMap((penjualan) =>
+      Array.isArray(penjualan.barang)
+        ? penjualan.barang.flatMap((barang) => (barang.id ? [barang.id] : []))
+        : []
+    )
+  );
+
+  return barangs.filter((barang) => !soldIds.has(barang.id));
+}
+
+function getNextBarcode(value: string | number): string {
+  const number = Number(value);
+  return Number.isInteger(number) && number >= 0
+    ? String(number + 1).padStart(9, "0")
+    : "000000001";
+}
+
 export default function BarangPage() {
   const [barangs, setBarangs] = useState<Barang[]>([]);
   const [karatList, setKaratList] = useState<Karat[]>([]);
@@ -89,26 +114,41 @@ export default function BarangPage() {
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
 
+  useEffect(() => {
+    const selectedKarat = karatList.find((karat) => karat.id === formData.karat_id);
+    const berat = parseFloat(formData.berat.replace(",", "."));
+    const hargaPerGram = selectedKarat?.harga ?? 0;
+    const calculatedHarga =
+      selectedKarat && Number.isFinite(berat) && berat > 0
+        ? String(Math.round(hargaPerGram * berat))
+        : "";
+
+    setFormData((previous) =>
+      previous.harga === calculatedHarga
+        ? previous
+        : { ...previous, harga: calculatedHarga }
+    );
+  }, [formData.berat, formData.karat_id, karatList]);
+
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const [resBarang, resKarat, resBaki, resPenjualan] = await Promise.all([
-        api.barang.list(),
+      const resBarang = await api.barang.list();
+      const allBarang = resBarang.data as Barang[];
+      setBarangs(allBarang);
+
+      const [resKarat, resBaki, resPenjualan] = await Promise.allSettled([
         api.karat.list(),
         api.baki.list(),
         api.penjualan.list(),
       ]);
-      const allBarang = resBarang.data as Barang[];
-      const soldIds = new Set<string>();
-      const penjualans = resPenjualan.data as any[];
-      penjualans.forEach((p: any) => {
-        if (p.barang) {
-          p.barang.forEach((b: any) => soldIds.add(b.id));
-        }
-      });
-      setBarangs(allBarang.filter((b) => !soldIds.has(b.id)));
-      setKaratList(resKarat.data as Karat[]);
-      setBakiList(resBaki.data as Baki[]);
+      if (resKarat.status === "fulfilled") setKaratList(resKarat.value.data as Karat[]);
+      if (resBaki.status === "fulfilled") setBakiList(resBaki.value.data as Baki[]);
+      if (resPenjualan.status === "fulfilled") {
+        setBarangs(filterSoldBarangs(allBarang, resPenjualan.value.data));
+      } else {
+        console.error("Failed to fetch penjualan; showing all barang:", resPenjualan.reason);
+      }
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -131,19 +171,16 @@ export default function BarangPage() {
 
   const fetchBarangs = async () => {
     try {
-      const [resBarang, resPenjualan] = await Promise.all([
-        api.barang.list(),
-        api.penjualan.list(),
-      ]);
+      const resBarang = await api.barang.list();
       const allBarang = resBarang.data as Barang[];
-      const soldIds = new Set<string>();
-      const penjualans = resPenjualan.data as any[];
-      penjualans.forEach((p: any) => {
-        if (p.barang) {
-          p.barang.forEach((b: any) => soldIds.add(b.id));
-        }
-      });
-      setBarangs(allBarang.filter((b) => !soldIds.has(b.id)));
+      setBarangs(allBarang);
+
+      try {
+        const resPenjualan = await api.penjualan.list();
+        setBarangs(filterSoldBarangs(allBarang, resPenjualan.data));
+      } catch (error) {
+        console.error("Failed to fetch penjualan; showing all barang:", error);
+      }
     } catch (error) {
       console.error("Failed to fetch barang:", error);
     }
@@ -172,10 +209,10 @@ export default function BarangPage() {
       setEditingId(null);
 
       // Fetch latest barcode when creating new
-      let nextBarcode = "";
+      let nextBarcode = "000000001";
       try {
         const resBarcode = await api.barang.latestBarcode();
-        nextBarcode = String(resBarcode.data + 1).padStart(9, "0");
+        nextBarcode = getNextBarcode(resBarcode.data);
       } catch (err) {
         console.error("Failed to fetch latest barcode", err);
       }
@@ -252,7 +289,7 @@ export default function BarangPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nama || !formData.berat || !formData.harga) return;
+    if (!formData.nama || !formData.karat_id || !formData.berat || !formData.harga) return;
 
     setSubmitting(true);
     try {
@@ -273,7 +310,18 @@ export default function BarangPage() {
         await api.barang.update(editingId, payload);
         toast.success("Data barang berhasil diperbarui.");
       } else {
-        await api.barang.create(payload);
+        try {
+          await api.barang.create(payload);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          if (!message.includes("barang_barcode_key")) throw error;
+
+          // The backend barcode counter can include deleted records differently.
+          // Move forward and retry once instead of submitting the same barcode.
+          const retryPayload = { ...payload, barcode: getNextBarcode(payload.barcode) };
+          await api.barang.create(retryPayload);
+          setFormData((previous) => ({ ...previous, barcode: retryPayload.barcode }));
+        }
         toast.success("Data barang berhasil ditambahkan.");
       }
       await fetchBarangs();
@@ -313,7 +361,13 @@ export default function BarangPage() {
   };
 
   const filteredData = useMemo(
-    () => barangs.filter((b) => b.barcode.toLowerCase().includes(search.toLowerCase()) || b.nama.toLowerCase().includes(search.toLowerCase())),
+    () => {
+      const query = search.toLowerCase();
+      return barangs.filter((b) =>
+        String(b.barcode ?? "").toLowerCase().includes(query) ||
+        String(b.nama ?? "").toLowerCase().includes(query)
+      );
+    },
     [barangs, search]
   );
   const totalPages = Math.ceil(filteredData.length / perPage);
@@ -538,13 +592,14 @@ export default function BarangPage() {
                   id="harga"
                   type="text"
                   value={formData.harga ? formatRupiah(parseInt(formData.harga.toString().replace(/\D/g, "") || "0")).replace("Rp", "").trim() : ""}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "");
-                    setFormData({ ...formData, harga: val });
-                  }}
-                  placeholder="0"
+                  placeholder="Pilih karat dan isi berat"
+                  readOnly
+                  disabled
                   required
                 />
+                <p className="text-xs text-muted-foreground">
+                  Harga otomatis: harga karat per gram × berat.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -599,10 +654,10 @@ export default function BarangPage() {
                   accept="image/*"
                   onChange={handleFileChange}
                 />
-                {formData.photo && (
+                {resolvePhotoUrl(formData.photo) && (
                   <div className="mt-2 relative h-28 w-28 sm:h-32 sm:w-32 overflow-hidden rounded-md border">
                     <img
-                      src={formData.photo}
+                      src={resolvePhotoUrl(formData.photo)}
                       alt="Preview"
                       className="object-cover h-full w-full"
                     />
@@ -640,10 +695,10 @@ export default function BarangPage() {
             <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-5">
               <div className="flex flex-col gap-2">
                 <span className="text-xs sm:text-sm font-semibold text-muted-foreground">Foto Barang</span>
-                {selectedBarang.photo ? (
+                {resolvePhotoUrl(selectedBarang.photo) ? (
                   <div className="relative w-full h-48 sm:h-64 rounded-lg border overflow-hidden">
                     <img
-                      src={selectedBarang.photo}
+                      src={resolvePhotoUrl(selectedBarang.photo)}
                       alt={selectedBarang.nama}
                       className="object-cover w-full h-full"
                     />
